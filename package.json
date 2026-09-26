@@ -1,0 +1,22 @@
+{
+  "name": "apothecary-little-world",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A very small 2D pixel-art multiplayer walking prototype (Maomao & Jinshi).",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "test:server": "node server/test/smoke.js",
+    "test:world": "node scripts/check-world.mjs"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.0",
+    "ws": "^8.21.3"
+  }
+}

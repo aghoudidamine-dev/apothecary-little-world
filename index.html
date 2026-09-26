@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Apothecary's Little World</title>
+    <meta name="description" content="A tiny pixel-art multiplayer walking prototype inspired by The Apothecary Diaries." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%232b2238'/%3E%3Ccircle cx='8' cy='8' r='4' fill='%23f2a7c3'/%3E%3Ccircle cx='8' cy='8' r='1.5' fill='%23ffd54a'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <canvas id="backdrop" aria-hidden="true"></canvas>
+
+    <main id="screens">
+      <!-- Title -->
+      <section id="screen-title" class="screen">
+        <h1 class="logo">The Apothecary's<br />Little World</h1>
+        <p class="tagline">Explore, talk, and wander together</p>
+        <nav class="panel menu" aria-label="Main menu">
+          <button id="btn-play" class="btn">PLAY</button>
+          <button id="btn-join" class="btn">JOIN ROOM</button>
+        </nav>
+      </section>
+
+      <!-- Character select -->
+      <section id="screen-pick" class="screen" hidden>
+        <div class="panel wide">
+          <h2>CHOOSE YOUR CHARACTER</h2>
+          <div class="cards">
+            <button id="card-maomao" class="card" aria-label="Maomao">
+              <span class="portrait"><canvas></canvas></span>
+              <span class="card-name"></span>
+              <span class="card-blurb"></span>
+            </button>
+            <button id="card-jinshi" class="card" aria-label="Jinshi">
+              <span class="portrait"><canvas></canvas></span>
+              <span class="card-name"></span>
+              <span class="card-blurb"></span>
+            </button>
+          </div>
+          <button id="pick-back" class="btn quiet">Back</button>
+        </div>
+      </section>
+
+      <!-- Room -->
+      <section id="screen-lobby" class="screen" hidden>
+        <div class="panel lobby">
+          <h2>MULTIPLAYER</h2>
+          <p id="lobby-who" class="who"></p>
+          <button id="btn-create" class="btn">CREATE ROOM</button>
+          <div class="or"><span>or join a friend</span></div>
+          <label for="room-code" class="field-label">ENTER ROOM CODE</label>
+          <div class="join-row">
+            <input id="room-code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A7K92" />
+            <button id="btn-join-room" class="btn">JOIN ROOM</button>
+          </div>
+          <p id="lobby-status" class="status" role="status" aria-live="polite"></p>
+          <div class="lobby-links">
+            <button id="lobby-back" class="btn quiet">Back</button>
+            <button id="btn-solo" class="btn quiet">Explore alone (no multiplayer)</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="game-root"></div>
+
+    <!-- In-game overlays -->
+    <div id="hud" hidden>
+      <div id="hud-room" class="hud-card" hidden>
+        <span class="hud-label">Room</span>
+        <strong id="hud-code"></strong>
+        <button id="hud-copy" class="hud-btn">Copy</button>
+        <span id="hud-players"></span>
+      </div>
+      <button id="hud-leave" class="hud-btn leave">Leave</button>
+      <div id="hud-notice" class="hud-card notice" role="alert" hidden></div>
+      <div class="controls-hint">WASD / Arrows move &nbsp; E talk &nbsp; Enter chat &nbsp; Esc close</div>
+    </div>
+    <div id="prompt" hidden></div>
+    <div id="chat-log" aria-live="polite"></div>
+    <div id="chat-bar" hidden>
+      <input id="chat-input" maxlength="140" autocomplete="off" placeholder="Say something... (Enter to send, Esc to cancel)" />
+    </div>
+    <div id="dialogue" hidden>
+      <canvas id="dialogue-portrait"></canvas>
+      <div class="dialogue-body">
+        <div id="dialogue-name"></div>
+        <p id="dialogue-text"></p>
+        <div class="dialogue-hint">Space / Enter to continue &middot; Esc to close</div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
