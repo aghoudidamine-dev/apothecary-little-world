@@ -5,19 +5,23 @@
 // Protocol (JSON text frames), unchanged from the Node version:
 //   client -> server   {t:'create', character}
 //                      {t:'join', code, character}
-//                      {t:'state', x, y, dir, moving}
+//                      {t:'state', x, y, dir, moving, area}   area: "outside" | "palace"
+//                      {t:'resync'}
 //                      {t:'chat', text}
+//                      {t:'gift', kind}   kind: "flower"
 //                      {t:'ping'}
 //   server -> client   {t:'created', code, id}
-//                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving}]}
+//                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving, area}]}
 //                      {t:'peer-joined', peer:{...}}   {t:'peer-left', id}
-//                      {t:'state', id, x, y, dir, moving}
-//                      {t:'chat', id, text}   {t:'pong'}
+//                      {t:'state', id, x, y, dir, moving, area}
+//                      {t:'resync', peers:[{id, character, x, y, dir, moving, area}]}
+//                      {t:'chat', id, text}   {t:'gift', id, kind}   {t:'pong'}
 //                      {t:'error', reason}   reason: no-room | room-full | character-taken | bad-request
 
 const MAX_PLAYERS = 2;
 const CHARACTERS = ["maomao", "jinshi"];
 const DIRS = ["down", "left", "right", "up"];
+const AREAS = ["outside", "palace"];
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 lookalikes
 const MAP_LIMIT = 4000;
 
@@ -30,6 +34,7 @@ type Player = {
   y: number | null;
   dir: string;
   moving: boolean;
+  area: string;
 };
 type Room = { players: Map<string, Player> };
 
@@ -53,7 +58,7 @@ const num = (v: unknown, fallback: number | null) =>
   typeof v === "number" && Number.isFinite(v) ? Math.max(-MAP_LIMIT, Math.min(MAP_LIMIT, v)) : fallback;
 
 function publicPeer(p: Player) {
-  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving };
+  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
 }
 
 const sockets = new WeakMap<WebSocket, Player>();
@@ -72,7 +77,7 @@ function leaveRoom(ws: WebSocket) {
 function enterRoom(ws: WebSocket, code: string, room: Room, character: string) {
   const player: Player = {
     id: "p" + nextId++, code, character, socket: ws,
-    x: null, y: null, dir: "down", moving: false,
+    x: null, y: null, dir: "down", moving: false, area: "outside",
   };
   sockets.set(ws, player);
   const peers = [...room.players.values()].map(publicPeer);
@@ -118,11 +123,20 @@ function handle(ws: WebSocket, msg: Record<string, unknown>) {
       p.y = num(msg.y, p.y);
       p.dir = DIRS.includes(msg.dir as string) ? (msg.dir as string) : p.dir;
       p.moving = !!msg.moving;
+      p.area = AREAS.includes(msg.area as string) ? (msg.area as string) : p.area;
       const room = rooms.get(p.code);
       if (!room) return;
-      const out = { t: "state", id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving };
+      const out = { t: "state", id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
       return;
+    }
+    case "resync": {
+      const p = sockets.get(ws);
+      if (!p) return;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const peers = [...room.players.values()].filter((o) => o.id !== p.id).map(publicPeer);
+      return send(ws, { t: "resync", peers });
     }
     case "chat": {
       const p = sockets.get(ws);
@@ -132,6 +146,16 @@ function handle(ws: WebSocket, msg: Record<string, unknown>) {
       const room = rooms.get(p.code);
       if (!room) return;
       const out = { t: "chat", id: p.id, text };
+      for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
+      return;
+    }
+    case "gift": {
+      const p = sockets.get(ws);
+      if (!p) return;
+      if (msg.kind !== "flower") return;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const out = { t: "gift", id: p.id, kind: "flower" };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
       return;
     }

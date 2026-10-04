@@ -8,6 +8,10 @@ export const H = 40; // tiles  (640 px)
 
 export const G = { GRASS: 0, DIRT: 1, PLAZA: 2, WATER: 3, COBBLE: 4, BRICK: 5 };
 
+// Just outside the palace's grand door, on the ceremonial brick lane.
+export const PALACE_DOOR = { x: 28 * TILE, y: 13 * TILE + 2 };
+export const PALACE_RETURN = { x: 28 * TILE, y: 15 * TILE };
+
 export const SPAWNS = {
   maomao: { x: 26 * TILE + 8, y: 16 * TILE + 14 },
   jinshi: { x: 29 * TILE + 8, y: 16 * TILE + 14 },
@@ -146,7 +150,7 @@ export function buildMap() {
 
   // ---- NPCs -----------------------------------------------------------------
   const npcs = [
-    { id: 'guard', name: 'GUARD', tx: 26, ty: 13, dir: 'down' },
+    { id: 'guard', name: 'GUARD', tx: 23, ty: 13, dir: 'down' },
     { id: 'servant', name: 'SERVANT', tx: 21, ty: 16, dir: 'right' },
     { id: 'merchant', name: 'MERCHANT', tx: 30, ty: 27, dir: 'left' },
     { id: 'gardener', name: 'GARDENER', tx: 47, ty: 22, dir: 'down' },

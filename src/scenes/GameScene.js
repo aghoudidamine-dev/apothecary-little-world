@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, W, H, SPAWNS } from '../world/mapData.js';
+import { TILE, W, H, SPAWNS, PALACE_DOOR, PALACE_RETURN } from '../world/mapData.js';
 import { moveWithCollision } from '../world/collision.js';
 import { NPC_DIALOGUE } from '../world/npcs.js';
 import { Character } from '../entities/Character.js';
@@ -10,12 +10,17 @@ import { chat } from '../ui/chat.js';
 
 const SPEED = 72;            // px per second (16px tiles)
 const INTERACT_DIST = 26;    // how close you must be to an NPC to talk
+const DOOR_DIST = 24;        // how close you must be to the palace door to enter
+const PALACE_ENABLED = false; // flip back to true to re-enable walking into the palace
+const GIFT_DIST = 28;        // how close Jinshi must be to Maomao to offer a flower
 const SEND_EVERY_MS = 50;    // max 20 position updates / second
 const HEARTBEAT_MS = 500;    // resend position at least this often
 const CHARACTER_LABEL = { maomao: 'MAOMAO', jinshi: 'JINSHI' };
 
 export class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
+
+  init(data) { this.returnSpawn = data?.returnSpawn || null; }
 
   /** Cached pixel-font label textures. */
   getLabelTexture(text) {
@@ -49,8 +54,9 @@ export class GameScene extends Phaser.Scene {
     }));
 
     // ---- me --------------------------------------------------------------------
-    const spawn = SPAWNS[session.character];
+    const spawn = this.returnSpawn || SPAWNS[session.character];
     this.me = new Character(this, session.character, spawn.x, spawn.y, CHARACTER_LABEL[session.character]);
+    if (this.returnSpawn) this.me.setState('down', false);
 
     // ---- camera --------------------------------------------------------------
     const cam = this.cameras.main;
@@ -66,7 +72,7 @@ export class GameScene extends Phaser.Scene {
 
     // Talk / dialogue keys are handled as events (not polled) so a very quick tap is never missed.
     const once = (fn) => (e) => { if (!e || !e.repeat) fn(); };
-    kb.on('keydown-E', once(() => this.tryTalk()));
+    kb.on('keydown-E', once(() => this.tryTalk() || this.tryEnterPalace() || this.tryGiveFlower()));
     kb.on('keydown-SPACE', once(() => { if (dialogue.isOpen) dialogue.advance(); }));
     kb.on('keydown-ENTER', once(() => {
       if (dialogue.isOpen) return dialogue.advance();
@@ -96,16 +102,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------------ network
+  // session.peers is the source of truth for "who's in the room" across scene
+  // restarts (e.g. leaving/entering the palace re-runs create()), so every
+  // handler here keeps it in sync, not just this scene's local `remotes` map.
   setupNetwork(session) {
     const net = session.net;
     for (const p of session.peers || []) this.addRemote(p);
     this.refreshPlayerCount();
 
-    net.on('peer-joined', (m) => { this.addRemote(m.peer); this.refreshPlayerCount(); })
-      .on('peer-left', (m) => { this.removeRemote(m.id); this.refreshPlayerCount(); })
-      .on('state', (m) => this.onRemoteState(m))
+    net.on('peer-joined', (m) => {
+        this.addRemote(m.peer);
+        session.peers = [...(session.peers || []).filter((p) => p.id !== m.peer.id), m.peer];
+        this.refreshPlayerCount();
+      })
+      .on('peer-left', (m) => {
+        this.removeRemote(m.id);
+        session.peers = (session.peers || []).filter((p) => p.id !== m.id);
+        this.refreshPlayerCount();
+      })
+      .on('state', (m) => {
+        this.onRemoteState(m);
+        const peer = (session.peers || []).find((p) => p.id === m.id);
+        if (peer) { peer.x = m.x; peer.y = m.y; peer.dir = m.dir; peer.moving = m.moving; }
+      })
       .on('chat', (m) => this.onRemoteChat(m))
+      .on('gift', (m) => this.onRemoteGift(m))
+      .on('resync', (m) => {
+        const ids = new Set(m.peers.map((p) => p.id));
+        for (const id of [...this.remotes.keys()]) if (!ids.has(id)) this.removeRemote(id);
+        for (const p of m.peers) this.addRemote(p);
+        session.peers = m.peers;
+        this.refreshPlayerCount();
+      })
       .on('close', () => hud.notice('Connection lost. Leave and rejoin the room to keep playing together.'));
+    net.send({ t: 'resync' }); // double-check who's actually still in the room (e.g. after a trip to the palace)
     this.sendState(0, true);
   }
 
@@ -152,6 +182,11 @@ export class GameScene extends Phaser.Scene {
     chat.addLine(label, m.text);
   }
 
+  onRemoteGift(m) {
+    if (m.kind !== 'flower') return;
+    this.me.showGift('flower');
+  }
+
   sendState(now, force = false) {
     const net = this.session.net;
     if (!net || !net.open) return;
@@ -166,12 +201,35 @@ export class GameScene extends Phaser.Scene {
 
   tryTalk() {
     const near = this.nearNpc, me = this.me;
-    if (!near || dialogue.isOpen || chat.isOpen) return;
+    if (!near || dialogue.isOpen || chat.isOpen) return false;
     const dx = me.x - near.char.x, dy = me.y - near.char.y;
     near.char.setState(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'), false);
     me.setState(me.dir, false);
     hud.prompt('');
     dialogue.open(near.name, near.id, near.lines);
+    return true;
+  }
+
+  // Talking to an NPC, entering the palace, and giving a flower all share the E
+  // key; each try*() runs in turn and only fires when nothing earlier was near.
+  tryEnterPalace() {
+    if (!this.nearDoor || dialogue.isOpen || chat.isOpen) return false;
+    // Multiplayer sync (state/chat/peer events) intentionally pauses while inside the
+    // palace, since the interior is a single-player sightseeing room; GameScene's own
+    // create() re-attaches full handlers the moment the player steps back outside.
+    if (this.session.net) {
+      this.session.net.on('peer-joined', () => {}).on('peer-left', () => {}).on('state', () => {}).on('chat', () => {}).on('gift', () => {});
+    }
+    this.scene.start('Palace', { returnSpawn: PALACE_RETURN });
+    return true;
+  }
+
+  tryGiveFlower() {
+    if (!this.nearPartner || dialogue.isOpen || chat.isOpen) return false;
+    this.nearPartner.char.showGift('flower');
+    this.me.setState(this.me.dir, false);
+    if (this.session.net) this.session.net.send({ t: 'gift', kind: 'flower' });
+    return true;
   }
 
   // -------------------------------------------------------------------- loop
@@ -208,7 +266,24 @@ export class GameScene extends Phaser.Scene {
       if (d < best) { best = d; near = n; }
     }
     this.nearNpc = near;
-    hud.prompt(near && !dialogue.isOpen && !chat.isOpen ? 'E - Talk' : '');
+    this.nearDoor = PALACE_ENABLED && !near && Math.hypot(PALACE_DOOR.x - me.x, PALACE_DOOR.y - me.y) < DOOR_DIST;
+
+    // Jinshi, near Maomao's player: offer to give a flower
+    this.nearPartner = null;
+    if (!near && !this.nearDoor && this.session.character === 'jinshi') {
+      let gbest = GIFT_DIST;
+      for (const r of this.remotes.values()) {
+        if (!r.known) continue;
+        const d = Math.hypot(r.char.x - me.x, r.char.y - me.y);
+        if (d < gbest) { gbest = d; this.nearPartner = r; }
+      }
+    }
+
+    if (dialogue.isOpen || chat.isOpen) hud.prompt('');
+    else if (near) hud.prompt('E - Talk');
+    else if (this.nearDoor) hud.prompt('E - Enter');
+    else if (this.nearPartner) hud.prompt('E - Give Flower');
+    else hud.prompt('');
 
     // other player(s): smooth toward the latest network position
     const k = 1 - Math.exp(-dt * 14);

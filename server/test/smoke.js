@@ -66,6 +66,22 @@ a.send({ t: 'chat', text: '  Hello Jinshi!  ' });
 const chat = await b.next((m) => m.t === 'chat');
 assert.deepEqual([chat.id, chat.text], [created.id, 'Hello Jinshi!']);
 
+b.send({ t: 'resync' });
+const resync = await b.next((m) => m.t === 'resync');
+assert.equal(resync.peers.length, 1);
+assert.equal(resync.peers[0].id, created.id);
+assert.equal(resync.peers[0].area, 'outside');
+
+a.send({ t: 'state', x: 10, y: 20, dir: 'down', moving: false, area: 'palace' });
+const inPalace = await b.next((m) => m.t === 'state');
+assert.equal(inPalace.area, 'palace');
+a.send({ t: 'state', x: 10, y: 20, dir: 'down', moving: false, area: 'outside' });
+assert.equal((await b.next((m) => m.t === 'state')).area, 'outside');
+
+b.send({ t: 'gift', kind: 'flower' });
+const gift = await a.next((m) => m.t === 'gift');
+assert.deepEqual([gift.id, gift.kind], [joined.id, 'flower']);
+
 b.ws.close();
 assert.equal((await a.next((m) => m.t === 'peer-left')).id, joined.id);
 

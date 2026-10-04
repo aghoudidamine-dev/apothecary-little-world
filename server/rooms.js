@@ -3,12 +3,16 @@
 // Protocol (JSON text frames):
 //   client -> server   {t:'create', character}
 //                      {t:'join', code, character}
-//                      {t:'state', x, y, dir, moving}
+//                      {t:'state', x, y, dir, moving, area}   area: 'outside' | 'palace'
+//                      {t:'resync'}
 //                      {t:'chat', text}
+//                      {t:'gift', kind}   kind: 'flower'
 //   server -> client   {t:'created', code, id}
-//                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving}]}
+//                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving, area}]}
 //                      {t:'peer-joined', peer:{...}}   {t:'peer-left', id}
-//                      {t:'state', id, x, y, dir, moving}
+//                      {t:'state', id, x, y, dir, moving, area}
+//                      {t:'resync', peers:[{id, character, x, y, dir, moving, area}]}
+//                      {t:'chat', id, text}   {t:'gift', id, kind}   {t:'pong'}
 //                      {t:'error', reason}   reason: no-room | room-full | character-taken | bad-request
 //
 // The server never simulates anything: it only hands out room codes and relays
@@ -19,6 +23,7 @@ export const MAX_PLAYERS = 2;
 export const CHARACTERS = ['maomao', 'jinshi'];
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no O/0/I/1 lookalikes
 const DIRS = ['down', 'left', 'right', 'up'];
+const AREAS = ['outside', 'palace'];
 const MAP_LIMIT = 4000; // px, generous bound just to reject garbage
 
 const rooms = new Map(); // code -> { players: Map<id, player> }
@@ -40,7 +45,7 @@ const send = (ws, msg) => {
 const num = (v, fallback) => (Number.isFinite(v) ? Math.max(-MAP_LIMIT, Math.min(MAP_LIMIT, v)) : fallback);
 
 function publicPeer(p) {
-  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving };
+  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
 }
 
 function leaveRoom(ws) {
@@ -57,7 +62,7 @@ function leaveRoom(ws) {
 function enterRoom(ws, code, room, character) {
   const player = {
     id: 'p' + nextId++, code, character, ws,
-    x: null, y: null, dir: 'down', moving: false, // x/y stay null until the client sends its first state
+    x: null, y: null, dir: 'down', moving: false, area: 'outside', // x/y stay null until the client sends its first state
   };
   ws.player = player;
   const peers = [...room.players.values()].map(publicPeer);
@@ -103,13 +108,22 @@ function handle(ws, msg) {
       p.y = num(msg.y, p.y);
       p.dir = DIRS.includes(msg.dir) ? msg.dir : p.dir;
       p.moving = !!msg.moving;
+      p.area = AREAS.includes(msg.area) ? msg.area : p.area;
       const room = rooms.get(p.code);
       if (!room) return;
-      const out = { t: 'state', id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving };
+      const out = { t: 'state', id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
       for (const other of room.players.values()) {
         if (other.id !== p.id) send(other.ws, out);
       }
       return;
+    }
+    case 'resync': {
+      const p = ws.player;
+      if (!p) return;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const peers = [...room.players.values()].filter((o) => o.id !== p.id).map(publicPeer);
+      return send(ws, { t: 'resync', peers });
     }
     case 'chat': {
       const p = ws.player;
@@ -119,6 +133,16 @@ function handle(ws, msg) {
       const room = rooms.get(p.code);
       if (!room) return;
       const out = { t: 'chat', id: p.id, text };
+      for (const other of room.players.values()) if (other.id !== p.id) send(other.ws, out);
+      return;
+    }
+    case 'gift': {
+      const p = ws.player;
+      if (!p) return;
+      if (msg.kind !== 'flower') return;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const out = { t: 'gift', id: p.id, kind: 'flower' };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.ws, out);
       return;
     }

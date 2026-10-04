@@ -24,27 +24,60 @@ export class Character {
 
   /** Show a speech-bubble with `text` above the character for a few seconds. */
   showChat(text) {
+    const PAD_X = 8, PAD_Y = 5, TAIL = 7;
     if (this.bubbleTimer) this.bubbleTimer.remove();
     if (!this.bubble) {
-      this.bubble = this.scene.add.text(0, 0, '', {
-        fontFamily: 'Georgia, serif',
-        fontSize: '13px',
-        color: '#2b2238',
-        backgroundColor: '#fff8e6',
-        padding: { x: 6, y: 4 },
-        wordWrap: { width: 160 },
+      this.bubbleBg = this.scene.add.graphics();
+      this.bubbleText = this.scene.add.text(0, 0, '', {
+        fontFamily: '"Palatino Linotype", Palatino, Georgia, serif',
+        fontSize: '12px',
+        color: '#fff8e6',
+        wordWrap: { width: 150, useAdvancedWrap: true },
         align: 'center',
-      }).setOrigin(0.5, 1).setDepth(200000);
+        lineSpacing: 3,
+      }).setOrigin(0.5, 1);
+      this.bubble = this.scene.add.container(0, 0, [this.bubbleBg, this.bubbleText]).setDepth(200000);
     }
-    this.bubble.setText(text).setVisible(true);
+    this.bubbleText.setText(text).setPosition(0, -TAIL - PAD_Y);
+    const w = Math.ceil(this.bubbleText.width) + PAD_X * 2;
+    const h = Math.ceil(this.bubbleText.height) + PAD_Y * 2;
+    const bg = this.bubbleBg;
+    bg.clear();
+    bg.fillStyle(0x1c1526, 0.94);
+    bg.fillRect(-w / 2, -TAIL - h, w, h);
+    bg.fillTriangle(-6, -TAIL, 6, -TAIL, 0, 0);
+    bg.lineStyle(2, 0xd4ad62, 1);
+    bg.strokeRect(-w / 2, -TAIL - h, w, h);
+    bg.beginPath(); bg.moveTo(-6, -TAIL); bg.lineTo(0, 0); bg.lineTo(6, -TAIL); bg.strokePath();
+    this.bubble.setVisible(true);
     this.positionBubble();
     this.bubbleTimer = this.scene.time.delayedCall(4000, () => this.bubble?.setVisible(false));
   }
 
   positionBubble() {
     if (this.bubble && this.bubble.visible) {
-      this.bubble.setPosition(Math.round(this.x), Math.round(this.y) - 34).setDepth(200000);
+      this.bubble.setPosition(Math.round(this.x), Math.round(this.y) - 30);
     }
+  }
+
+  /** Receive a little gift: a flower icon floats up above the character, who gives a happy bounce. */
+  showGift(kind) {
+    if (!this.giftIcon) {
+      this.giftIcon = this.scene.add.image(0, 0, 'icon_' + kind).setOrigin(0.5, 1).setDepth(210000);
+    }
+    if (this.giftTween) this.giftTween.stop();
+    if (this.bounceTween) this.bounceTween.stop();
+    const startY = Math.round(this.y) - 28;
+    this.giftIcon.setTexture('icon_' + kind).setPosition(Math.round(this.x), startY).setAlpha(1).setScale(0.6).setVisible(true);
+    this.scene.tweens.add({ targets: this.giftIcon, scale: 1, duration: 180, ease: 'Back.Out' });
+    this.giftTween = this.scene.tweens.add({
+      targets: this.giftIcon, y: startY - 20, alpha: 0, duration: 1500, delay: 300, ease: 'Cubic.Out',
+      onComplete: () => this.giftIcon?.setVisible(false),
+    });
+    this.sprite.setScale(1);
+    this.bounceTween = this.scene.tweens.add({
+      targets: this.sprite, scaleX: 1.22, scaleY: 1.22, duration: 160, yoyo: true, repeat: 1, ease: 'Quad.Out',
+    });
   }
 
   playAnim() {
@@ -73,6 +106,7 @@ export class Character {
     this.shadow.setVisible(v);
     if (this.label) this.label.setVisible(v);
     if (this.bubble && !v) this.bubble.setVisible(false);
+    if (this.giftIcon && !v) this.giftIcon.setVisible(false);
   }
 
   destroy() {
@@ -81,5 +115,8 @@ export class Character {
     if (this.label) this.label.destroy();
     if (this.bubble) this.bubble.destroy();
     if (this.bubbleTimer) this.bubbleTimer.remove();
+    if (this.giftIcon) this.giftIcon.destroy();
+    if (this.giftTween) this.giftTween.stop();
+    if (this.bounceTween) this.bounceTween.stop();
   }
 }

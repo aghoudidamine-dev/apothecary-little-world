@@ -3,6 +3,7 @@
 // one atlas so Phaser can draw them cheaply.
 import { makeCanvas, rect, px, disc, ellipse, rng, outline } from './canvas.js';
 import { TILE, W, H, G } from '../world/mapData.js';
+import { FLOOR } from '../world/interiorMap.js';
 
 // ============================================================ ground =========
 const GRASS = ['#78b759', '#75b457', '#7bba5b'];
@@ -344,6 +345,41 @@ function drawStall(colorA, colorB) {
   return outline(canvas, DARK);
 }
 
+function drawThrone() {
+  const { canvas, ctx } = newSprite(32, 40);
+  const gold = '#e2b43c', goldHi = '#f6db7a', wood = '#5a3a2a';
+  ellipse(ctx, 16, 38, 13, 3, 'rgba(20,10,10,0.3)');
+  rect(ctx, 4, 30, 24, 8, '#8c2a24'); rect(ctx, 4, 30, 24, 2, '#b8382f');
+  rect(ctx, 2, 12, 4, 26, wood); rect(ctx, 26, 12, 4, 26, wood);
+  rect(ctx, 2, 12, 4, 3, gold); rect(ctx, 26, 12, 4, 3, gold);
+  rect(ctx, 6, 16, 20, 14, '#7a2a20'); rect(ctx, 6, 16, 20, 2, '#a3382c');
+  rect(ctx, 6, 16, 2, 14, gold); rect(ctx, 24, 16, 2, 14, gold);
+  rect(ctx, 4, 0, 24, 14, '#7a2a20'); rect(ctx, 4, 0, 24, 3, '#a3382c');
+  rect(ctx, 4, 0, 3, 14, gold); rect(ctx, 25, 0, 3, 14, gold);
+  disc(ctx, 16, 4, 3, gold); disc(ctx, 16, 4, 1, goldHi);
+  for (let y = 6; y < 13; y += 3) { rect(ctx, 9, y, 2, 2, gold); rect(ctx, 21, y, 2, 2, gold); }
+  return outline(canvas, DARK);
+}
+
+function drawPillar() {
+  const { canvas, ctx } = newSprite(16, 48);
+  ellipse(ctx, 8, 46, 6, 2, 'rgba(20,10,10,0.25)');
+  rect(ctx, 3, 6, 10, 38, '#8c2a24'); rect(ctx, 3, 6, 3, 38, '#a3382c'); rect(ctx, 10, 6, 3, 38, '#6e1e18');
+  rect(ctx, 1, 2, 14, 5, '#e2b43c'); rect(ctx, 1, 2, 14, 2, '#f6db7a'); rect(ctx, 1, 40, 14, 5, '#e2b43c'); rect(ctx, 1, 40, 14, 2, '#f6db7a');
+  for (let y = 10; y < 42; y += 6) { rect(ctx, 3, y, 10, 1, '#6e1e18'); }
+  return outline(canvas, DARK);
+}
+
+function drawBanner() {
+  const { canvas, ctx } = newSprite(16, 32);
+  rect(ctx, 1, 0, 14, 3, '#5a3a2a');
+  rect(ctx, 3, 3, 10, 24, '#8c2a24'); rect(ctx, 3, 3, 10, 2, '#a3382c');
+  rect(ctx, 3, 27, 10, 3, '#e2b43c');
+  disc(ctx, 8, 15, 4, '#e2b43c'); disc(ctx, 8, 15, 2, '#f6db7a');
+  rect(ctx, 3, 3, 2, 24, '#6e1e18'); rect(ctx, 9, 3, 2, 24, '#6e1e18');
+  return outline(canvas, DARK);
+}
+
 export function buildObjectSprites() {
   const wallA = { wall: '#f0e2c0', beam: '#7a3f2b' };
   const sprites = {
@@ -365,6 +401,9 @@ export function buildObjectSprites() {
     stall1: drawStall('#4f9a62', '#f6ead0'),
     stall2: drawStall('#e8a93a', '#f6ead0'),
     palace: drawPalace(),
+    throne: drawThrone(),
+    pillar: drawPillar(),
+    banner: drawBanner(),
   };
   return sprites;
 }
@@ -412,4 +451,48 @@ export function makeLabel(text, color = '#ffffff') {
     for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) if (g[r * 3 + c] === '1') px(ctx, 2 + i * 4 + c, 2 + r, color);
   });
   return outline(canvas, [40, 26, 44]);
+}
+
+
+// ============================================================ interior ======
+const WOOD_A = '#8a6a48', WOOD_B = '#7f6041';
+const RUG = '#8c2a24', RUG_TRIM = '#e2b43c';
+
+/** Bakes the throne-room floor (wood planks + a red rug leading to the dais). */
+export function bakeInteriorGround(map) {
+  const canvas = makeCanvas(map.W * TILE, map.H * TILE);
+  const ctx = canvas.getContext('2d');
+  for (let ty = 0; ty < map.H; ty++) {
+    for (let tx = 0; tx < map.W; tx++) {
+      const x = tx * TILE, y = ty * TILE;
+      const isRug = map.ground[ty * map.W + tx] === FLOOR.RUG;
+      if (isRug) {
+        rect(ctx, x, y, TILE, TILE, RUG);
+        if (tx === 8 || map.ground[ty * map.W + tx - 1] !== FLOOR.RUG) rect(ctx, x, y, 2, TILE, RUG_TRIM);
+        if (tx === 12 || map.ground[ty * map.W + tx + 1] !== FLOOR.RUG) rect(ctx, x + TILE - 2, y, 2, TILE, RUG_TRIM);
+      } else {
+        rect(ctx, x, y, TILE, TILE, (tx + ty) % 2 ? WOOD_A : WOOD_B);
+        rect(ctx, x, y, TILE, 1, 'rgba(255,255,255,0.06)');
+        rect(ctx, x, y + TILE - 1, TILE, 1, 'rgba(0,0,0,0.12)');
+      }
+    }
+  }
+  // back wall strip along the top
+  rect(ctx, 0, 0, map.W * TILE, TILE, '#4a3326');
+  rect(ctx, 0, TILE - 3, map.W * TILE, 3, '#2e1e16');
+  return canvas;
+}
+
+// ============================================================ gift icon ======
+/** A small pink pixel flower, used as the "gave a flower" reaction icon. */
+export function makeFlowerIcon() {
+  const canvas = makeCanvas(14, 16);
+  const ctx = canvas.getContext('2d');
+  rect(ctx, 6, 9, 2, 6, '#4f9a45');
+  rect(ctx, 6, 13, 3, 1, '#3f8a3f');
+  const petal = '#f27aa5', petalLight = '#ffb3cf', center = '#ffd54a';
+  disc(ctx, 7, 5, 3, petal); disc(ctx, 4, 7, 3, petal); disc(ctx, 10, 7, 3, petal);
+  disc(ctx, 5, 9, 3, petal); disc(ctx, 9, 9, 3, petal);
+  disc(ctx, 7, 7, 2, center); px(ctx, 6, 6, petalLight); px(ctx, 9, 6, petalLight);
+  return outline(canvas, [63, 40, 50]);
 }

@@ -65,6 +65,48 @@ export const CHARACTER_SPECS = {
     trim: '#ffffff', sash: '#e68aa6', shoes: '#3a3550',
     style: 'bun', accessory: 'scarf', freckles: false, eye: '#1b1a24',
   },
+  emperor: {
+    label: 'The Emperor',
+    hair: '#1a1620', hairLight: '#2e283a', hairShadow: '#100d15',
+    robe: '#3a2a5e', robeLight: '#5b4590', robeDark: '#241a3d',
+    trim: '#f2d16a', sash: '#f2d16a', shoes: '#1c1424',
+    style: 'short', accessory: 'crown', freckles: false, eye: '#1a1538',
+  },
+  empress_dowager: {
+    label: 'Empress Dowager',
+    hair: '#5a5560', hairLight: '#78727e', hairShadow: '#3d3944',
+    robe: '#6b2f4a', robeLight: '#96496b', robeDark: '#471d31',
+    trim: '#f2d16a', sash: '#f2d16a', shoes: '#2a1e26',
+    style: 'bun', accessory: 'pin', freckles: false, eye: '#332633',
+  },
+  gyokuyou: {
+    label: 'Gyokuyou',
+    hair: '#6b3a24', hairLight: '#8f5638', hairShadow: '#4a2517',
+    robe: '#d97b3a', robeLight: '#f0a25c', robeDark: '#a95521',
+    trim: '#fbe8b0', sash: '#c8452f', shoes: '#4a2a1c',
+    style: 'long', accessory: 'pin', freckles: false, eye: '#3a2015',
+  },
+  lihua: {
+    label: 'Lihua',
+    hair: '#22283a', hairLight: '#3a4258', hairShadow: '#151a26',
+    robe: '#2f5f8a', robeLight: '#4d86b5', robeDark: '#1e3f5c',
+    trim: '#e8e3d0', sash: '#e8e3d0', shoes: '#1c2432',
+    style: 'long', accessory: 'pin', freckles: false, eye: '#141824',
+  },
+  lishu: {
+    label: 'Lishu',
+    hair: '#4a2e3a', hairLight: '#6b4658', hairShadow: '#301c26',
+    robe: '#e9a3bd', robeLight: '#f6c6d8', robeDark: '#c67b98',
+    trim: '#ffffff', sash: '#f2d16a', shoes: '#4a2e3a',
+    style: 'bob', accessory: 'ribbon', freckles: false, eye: '#3a2430',
+  },
+  ah_duo: {
+    label: 'Ah Duo',
+    hair: '#2a2420', hairLight: '#453a32', hairShadow: '#181410',
+    robe: '#3f6b4a', robeLight: '#5f9268', robeDark: '#2a4a33',
+    trim: '#dcd0a8', sash: '#dcd0a8', shoes: '#241f1c',
+    style: 'short', accessory: 'none', freckles: false, eye: '#1c1a16',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -210,6 +252,16 @@ function drawAccessory(ctx, s, dir, bob) {
       break;
     case 'scarf':
       H(3, 2, 10, 2, '#ffffff'); H(3, 4, 10, 1, '#dfe8f0'); if (dir === 'down') { P(12, 4, '#ffffff'); P(12, 5, '#dfe8f0'); }
+      break;
+    case 'crown': // the emperor's flat court hat with hanging gold beads
+      if (dir === 'down' || dir === 'up') {
+        H(3, -1, 10, 2, '#141018'); H(3, 1, 10, 1, '#f2d16a');
+        H(4, -2, 8, 1, '#242030');
+        [4, 6, 9, 11].forEach((bx) => { P(bx, 2, '#f2d16a'); P(bx, 3, '#f2d16a'); });
+      } else {
+        H(4, -1, 9, 2, '#141018'); H(4, 1, 9, 1, '#f2d16a'); H(4, -2, 7, 1, '#242030');
+        [5, 7, 10].forEach((bx) => { P(bx, 2, '#f2d16a'); P(bx, 3, '#f2d16a'); });
+      }
       break;
     default:
       break;
