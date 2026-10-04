@@ -78,6 +78,19 @@ export class Character {
     this.bounceTween = this.scene.tweens.add({
       targets: this.sprite, scaleX: 1.22, scaleY: 1.22, duration: 160, yoyo: true, repeat: 1, ease: 'Quad.Out',
     });
+
+    // a couple of little hearts, so she looks genuinely happy about it
+    [{ delay: 200, dx: -7 }, { delay: 480, dx: 7 }].forEach(({ delay, dx }) => {
+      this.scene.time.delayedCall(delay, () => {
+        if (!this.sprite?.scene) return; // character was destroyed in the meantime
+        const heart = this.scene.add.image(Math.round(this.x) + dx, Math.round(this.y) - 30, 'icon_heart')
+          .setOrigin(0.5, 1).setDepth(210001).setScale(0.5).setAlpha(0.95);
+        this.scene.tweens.add({
+          targets: heart, y: heart.y - 16, alpha: 0, scale: 0.85, duration: 750, ease: 'Cubic.Out',
+          onComplete: () => heart.destroy(),
+        });
+      });
+    });
   }
 
   playAnim() {

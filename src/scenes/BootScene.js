@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { buildMap } from '../world/mapData.js';
-import { bakeGround, buildObjectSprites, packAtlas, makeFlowerIcon } from '../art/environment.js';
+import { bakeGround, buildObjectSprites, packAtlas, makeFlowerIcon, makeHeartIcon } from '../art/environment.js';
 import { CHARACTER_SPECS, CELL_W, CELL_H, DIRS, makeShadow } from '../art/characters.js';
 import { getSheet } from '../art/registry.js';
 
@@ -20,6 +20,7 @@ export class BootScene extends Phaser.Scene {
 
     this.textures.addCanvas('shadow', makeShadow());
     this.textures.addCanvas('icon_flower', makeFlowerIcon());
+    this.textures.addCanvas('icon_heart', makeHeartIcon());
 
     for (const key of Object.keys(CHARACTER_SPECS)) {
       const tex = this.textures.addCanvas('char_' + key, getSheet(key));

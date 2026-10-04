@@ -7,6 +7,7 @@ import { makeLabel } from '../art/environment.js';
 import { hud } from '../ui/hud.js';
 import { dialogue } from '../ui/dialogue.js';
 import { chat } from '../ui/chat.js';
+import { playGiftToss } from '../entities/gifts.js';
 
 const SPEED = 72;            // px per second (16px tiles)
 const INTERACT_DIST = 26;    // how close you must be to an NPC to talk
@@ -16,6 +17,13 @@ const GIFT_DIST = 28;        // how close Jinshi must be to Maomao to offer a fl
 const SEND_EVERY_MS = 50;    // max 20 position updates / second
 const HEARTBEAT_MS = 500;    // resend position at least this often
 const CHARACTER_LABEL = { maomao: 'MAOMAO', jinshi: 'JINSHI' };
+
+/** Which way `a` should face to look at `b`. */
+function facingToward(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+  return dy > 0 ? 'down' : 'up';
+}
 
 export class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -184,7 +192,10 @@ export class GameScene extends Phaser.Scene {
 
   onRemoteGift(m) {
     if (m.kind !== 'flower') return;
-    this.me.showGift('flower');
+    const giver = this.remotes.get(m.id);
+    if (!giver || !giver.known) { this.me.showGift('flower'); return; } // fallback: just show the reaction
+    this.me.setState(facingToward(this.me, giver.char), false);
+    playGiftToss(this, giver.char, this.me, 'flower');
   }
 
   sendState(now, force = false) {
@@ -226,8 +237,8 @@ export class GameScene extends Phaser.Scene {
 
   tryGiveFlower() {
     if (!this.nearPartner || dialogue.isOpen || chat.isOpen) return false;
-    this.nearPartner.char.showGift('flower');
-    this.me.setState(this.me.dir, false);
+    this.me.setState(facingToward(this.me, this.nearPartner.char), false);
+    playGiftToss(this, this.me, this.nearPartner.char, 'flower');
     if (this.session.net) this.session.net.send({ t: 'gift', kind: 'flower' });
     return true;
   }

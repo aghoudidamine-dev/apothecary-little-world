@@ -496,3 +496,15 @@ export function makeFlowerIcon() {
   disc(ctx, 7, 7, 2, center); px(ctx, 6, 6, petalLight); px(ctx, 9, 6, petalLight);
   return outline(canvas, [63, 40, 50]);
 }
+
+/** A tiny pixel heart, used for the "aww, happy" reaction after a gift lands. */
+export function makeHeartIcon() {
+  const canvas = makeCanvas(10, 9);
+  const ctx = canvas.getContext('2d');
+  const red = '#e8536b', light = '#ff8fa3';
+  rect(ctx, 1, 1, 3, 3, red); rect(ctx, 6, 1, 3, 3, red);
+  rect(ctx, 1, 4, 8, 2, red);
+  rect(ctx, 2, 6, 6, 1, red); rect(ctx, 3, 7, 4, 1, red); rect(ctx, 4, 8, 2, 1, red);
+  px(ctx, 2, 2, light); px(ctx, 7, 2, light);
+  return outline(canvas, [63, 25, 35]);
+}

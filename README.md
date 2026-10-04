@@ -29,7 +29,8 @@ if you're playing online, the other player won't see you (or vice versa) while e
 is inside; you're back in sync as soon as you both step outside.
 
 **Giving a flower:** playing as Jinshi, walk up to Maomao's player and an "E - Give Flower"
-prompt appears. Press E and she'll get a little flower-and-happy-bounce reaction on her screen.
+prompt appears. Press E and a flower tosses over to her in a little arc, then she gives a happy
+bounce with a couple of hearts — visible on both screens.
 
 ## Tests
 
