@@ -23,10 +23,11 @@ On the same Wi-Fi a phone or second computer can use the "Network" URL Vite prin
 when you're at its door), Space/Enter continues dialogue, Enter (outside dialogue) opens a
 chat box to message the other player, Esc closes dialogue/chat.
 
-**The palace:** walk up to the palace's front door and press E to step inside and meet the
-Emperor, the Empress Dowager, and the four consorts. This part is single-player sightseeing —
-if you're playing online, the other player won't see you (or vice versa) while either of you
-is inside; you're back in sync as soon as you both step outside.
+**The palace:** walk up to the palace's front door and press E to step inside — a big hall several
+times the size of the screen, with a long rug leading up to a throne. Empty for now (no
+characters inside yet). Multiplayer stays fully live in there: if you're both inside you see and
+chat with each other exactly like outside; whoever's elsewhere only reappears once you're both
+in the same place again. Press E near the door to leave.
 
 **Giving a flower:** playing as Jinshi, walk up to Maomao's player and an "E - Give Flower"
 prompt appears. Press E and a flower tosses over to her in a little arc, then she gives a happy

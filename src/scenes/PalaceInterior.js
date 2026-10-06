@@ -1,20 +1,19 @@
 import Phaser from 'phaser';
 import { buildInteriorMap } from '../world/interiorMap.js';
 import { moveWithCollision } from '../world/collision.js';
-import { INTERIOR_DIALOGUE } from '../world/interiorNpcs.js';
 import { Character } from '../entities/Character.js';
 import { bakeInteriorGround, buildObjectSprites, packAtlas, makeLabel } from '../art/environment.js';
 import { hud } from '../ui/hud.js';
 import { dialogue } from '../ui/dialogue.js';
 import { chat } from '../ui/chat.js';
+import { AreaSync, CHARACTER_LABEL } from '../multiplayer/areaSync.js';
 
-const SPEED = 64;
-const INTERACT_DIST = 24;
+const SPEED = 72;
 
 /**
- * Single-player sightseeing room: whichever player walks in sees the same fixed
- * residents and can look around and talk to them. It intentionally doesn't sync
- * with the other player online — see the note above tryEnter() in GameScene.js.
+ * The palace hall. Empty for now (no residents) — just a big space to walk around
+ * in together. Fully synced with the other player while you're both inside, via
+ * AreaSync (see ../multiplayer/areaSync.js), exactly like the outdoor map.
  */
 export class PalaceInterior extends Phaser.Scene {
   constructor() { super('Palace'); }
@@ -47,13 +46,7 @@ export class PalaceInterior extends Phaser.Scene {
       this.add.image((o.tx + o.w / 2) * 16, bottom, 'interior_objects', o.frame).setOrigin(0.5, 1).setDepth(bottom);
     }
 
-    this.residents = map.npcs.map((n) => {
-      const c = new Character(this, n.id, n.tx * 16 + 8, n.ty * 16 + 14, n.name);
-      c.setState(n.dir, false);
-      return { ...n, lines: INTERIOR_DIALOGUE[n.id], char: c };
-    });
-
-    this.me = new Character(this, session.character, map.spawn.x, map.spawn.y, session.character.toUpperCase());
+    this.me = new Character(this, session.character, map.spawn.x, map.spawn.y, CHARACTER_LABEL[session.character]);
     this.me.setState('up', false);
 
     const cam = this.cameras.main;
@@ -64,32 +57,37 @@ export class PalaceInterior extends Phaser.Scene {
     this.keys = kb.addKeys({ w: 'W', a: 'A', s: 'S', d: 'D', up: 'UP', left: 'LEFT', down: 'DOWN', right: 'RIGHT' });
     const once = (fn) => (e) => { if (!e || !e.repeat) fn(); };
     kb.on('keydown-E', once(() => this.tryInteract()));
-    kb.on('keydown-SPACE', once(() => { if (dialogue.isOpen) dialogue.advance(); }));
-    kb.on('keydown-ENTER', once(() => { if (dialogue.isOpen) dialogue.advance(); }));
+    kb.on('keydown-ENTER', once(() => {
+      if (!chat.isOpen && session.net) this.openChat();
+    }));
     kb.on('keydown-ESC', once(() => { if (dialogue.isOpen) dialogue.close(); }));
 
-    // Chat and further network events are ignored while inside (see class doc above);
-    // GameScene re-attaches its own handlers as soon as the player steps back outside.
-    if (session.net) {
-      session.net.on('peer-joined', () => {}).on('peer-left', () => {}).on('state', () => {}).on('chat', () => {}).on('gift', () => {});
-    }
+    chat.onSubmit = (text) => {
+      this.me.showChat(text);
+      chat.addLine(CHARACTER_LABEL[session.character], text);
+      if (session.net) session.net.send({ t: 'chat', text });
+    };
+    chat.onClose = () => { this.input.keyboard.enabled = true; };
 
     hud.init({ code: session.code, online: !!session.net, onLeave: () => window.location.reload() });
-    if (session.net) hud.setPlayers(1); // the other player's status will refresh once you step back outside
     hud.prompt('');
-    this.near = null;
+    this.areaSync = new AreaSync(this, session, 'palace', {
+      onPlayerCount: (n) => hud.setPlayers(n),
+      onChat: (label, text) => chat.addLine(label, text),
+    });
+    if (session.net) {
+      session.net.on('close', () => hud.notice('Connection lost. Leave and rejoin the room to keep playing together.'));
+    }
+  }
+
+  openChat() {
+    this.input.keyboard.enabled = false;
+    chat.open();
   }
 
   tryInteract() {
     if (dialogue.isOpen || chat.isOpen) return;
-    if (this.nearDoor) return this.leave();
-    if (this.near) {
-      const dx = this.me.x - this.near.char.x, dy = this.me.y - this.near.char.y;
-      this.near.char.setState(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'), false);
-      this.me.setState(this.me.dir, false);
-      hud.prompt('');
-      dialogue.open(this.near.name, this.near.id, this.near.lines);
-    }
+    if (this.nearDoor) this.leave();
   }
 
   leave() {
@@ -119,18 +117,14 @@ export class PalaceInterior extends Phaser.Scene {
     }
     me.setState(dir, moved);
 
-    let near = null, best = INTERACT_DIST;
-    for (const r of this.residents) {
-      const d = Math.hypot(r.char.x - me.x, r.char.y - me.y);
-      if (d < best) { best = d; near = r; }
-    }
-    this.near = near;
     const doorDist = Math.hypot(this.map.door.x - me.x, this.map.door.y - me.y);
-    this.nearDoor = !near && doorDist < 26;
+    this.nearDoor = doorDist < 28;
 
     if (dialogue.isOpen || chat.isOpen) hud.prompt('');
-    else if (near) hud.prompt('E - Talk');
     else if (this.nearDoor) hud.prompt('E - Leave');
     else hud.prompt('');
+
+    this.areaSync.step(dt);
+    this.areaSync.sendState(time);
   }
 }

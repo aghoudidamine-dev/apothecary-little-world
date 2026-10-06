@@ -1,24 +1,15 @@
-// A small, static room: no procedural generation needed, just a fixed layout.
+// A big, static palace hall. No procedural generation needed, just a fixed layout.
 // Shares TILE size with the outdoor map so the same Character/collision code works.
 import { TILE } from './mapData.js';
 
-export const W = 20; // tiles (320px)
-export const H = 14; // tiles (224px)
+export const W = 48; // tiles (768px) — several times the size of the outdoor viewport
+export const H = 34; // tiles (544px)
 
 export const FLOOR = { WOOD: 0, RUG: 1 };
 
-export const DOOR_SPOT = { x: 10 * TILE, y: (H - 1) * TILE - 2 }; // walk here (or press E) to leave
-export const ENTRY_SPAWN = { x: 10 * TILE, y: (H - 2) * TILE };
-
-// Fixed character placements. `dir` is which way they face while standing still.
-export const RESIDENTS = [
-  { id: 'emperor', name: 'THE EMPEROR', tx: 10, ty: 3, dir: 'down' },
-  { id: 'empress_dowager', name: 'EMPRESS DOWAGER', tx: 6, ty: 5, dir: 'right' },
-  { id: 'gyokuyou', name: 'GYOKUYOU', tx: 14, ty: 5, dir: 'left' },
-  { id: 'lihua', name: 'LIHUA', tx: 5, ty: 9, dir: 'right' },
-  { id: 'lishu', name: 'LISHU', tx: 15, ty: 9, dir: 'left' },
-  { id: 'ah_duo', name: 'AH DUO', tx: 10, ty: 8, dir: 'down' },
-];
+const DOOR_CX = Math.floor(W / 2);
+export const DOOR_SPOT = { x: DOOR_CX * TILE, y: (H - 1) * TILE - 2 }; // walk here (or press E) to leave
+export const ENTRY_SPAWN = { x: DOOR_CX * TILE, y: (H - 3) * TILE };
 
 export function buildInteriorMap() {
   const ground = new Uint8Array(W * H).fill(FLOOR.WOOD);
@@ -30,23 +21,32 @@ export function buildInteriorMap() {
   };
   const add = (frame, tx, ty, w = 1, h = 1) => { objects.push({ frame, tx, ty, w, h }); block(tx, ty, w, h); };
 
-  // walls all around, one door gap at the bottom
+  // perimeter walls, with a door gap at the bottom-center
   block(0, 0, W, 1); block(0, H - 1, W, 1); block(0, 0, 1, H); block(W - 1, 0, 1, H);
-  blocked[idx(9, H - 1)] = 0; blocked[idx(10, H - 1)] = 0; blocked[idx(11, H - 1)] = 0;
+  [-1, 0, 1].forEach((d) => { blocked[idx(DOOR_CX + d, H - 1)] = 0; });
 
-  // red rug leading to the throne dais
-  for (let y = 2; y < H - 1; y++) for (let x = 8; x <= 12; x++) ground[idx(x, y)] = FLOOR.RUG;
+  // a long red rug running from the door up to the throne dais
+  const rugHalf = 3;
+  for (let y = 2; y < H - 1; y++) for (let x = DOOR_CX - rugHalf; x <= DOOR_CX + rugHalf; x++) ground[idx(x, y)] = FLOOR.RUG;
 
-  // throne dais + throne
-  block(8, 1, 5, 2);
-  add('throne', 9, 1, 2, 2);
+  // throne dais at the far end of the hall
+  block(DOOR_CX - 3, 2, 7, 3);
+  add('throne', DOOR_CX - 1, 2, 2, 2);
 
-  // pillars flanking the room
-  [[3, 2], [16, 2], [3, 7], [16, 7], [3, 11], [16, 11]].forEach(([x, y]) => add('pillar', x, y));
-  // banners on the back wall
-  [[5, 0], [8, 0], [11, 0], [14, 0]].forEach(([x, y]) => add('banner', x, y, 1, 1));
+  // two long rows of pillars flanking the rug the whole length of the hall
+  for (let y = 4; y < H - 3; y += 4) {
+    add('pillar', DOOR_CX - rugHalf - 3, y);
+    add('pillar', DOOR_CX + rugHalf + 2, y);
+  }
+  // a second, outer row for extra grandeur
+  for (let y = 5; y < H - 3; y += 6) {
+    add('pillar', 4, y);
+    add('pillar', W - 5, y);
+  }
 
-  RESIDENTS.forEach((r) => block(r.tx, r.ty, 1, 1));
+  // banners along the back wall and partway down both side walls
+  for (let x = 4; x < W - 4; x += 5) add('banner', x, 0, 1, 1);
+  for (let y = 3; y < H - 4; y += 6) { add('banner', 0, y, 1, 1); add('banner', W - 1, y, 1, 1); }
 
-  return { W, H, ground, blocked, objects, npcs: RESIDENTS, spawn: ENTRY_SPAWN, door: DOOR_SPOT };
+  return { W, H, ground, blocked, objects, npcs: [], spawn: ENTRY_SPAWN, door: DOOR_SPOT };
 }
