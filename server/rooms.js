@@ -7,12 +7,14 @@
 //                      {t:'resync'}
 //                      {t:'chat', text}
 //                      {t:'gift', kind}   kind: 'flower'
+//                      {t:'outfit', index}   index: 0 | 1 | 2
 //   server -> client   {t:'created', code, id}
-//                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving, area}]}
+//                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving, area, outfit}]}
 //                      {t:'peer-joined', peer:{...}}   {t:'peer-left', id}
 //                      {t:'state', id, x, y, dir, moving, area}
-//                      {t:'resync', peers:[{id, character, x, y, dir, moving, area}]}
-//                      {t:'chat', id, text}   {t:'gift', id, kind}   {t:'pong'}
+//                      {t:'resync', peers:[{id, character, x, y, dir, moving, area, outfit}]}
+//                      {t:'chat', id, text}   {t:'gift', id, kind}
+//                      {t:'outfit', id, index}   {t:'pong'}
 //                      {t:'error', reason}   reason: no-room | room-full | character-taken | bad-request
 //
 // The server never simulates anything: it only hands out room codes and relays
@@ -45,7 +47,7 @@ const send = (ws, msg) => {
 const num = (v, fallback) => (Number.isFinite(v) ? Math.max(-MAP_LIMIT, Math.min(MAP_LIMIT, v)) : fallback);
 
 function publicPeer(p) {
-  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
+  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, outfit: p.outfit };
 }
 
 function leaveRoom(ws) {
@@ -62,7 +64,7 @@ function leaveRoom(ws) {
 function enterRoom(ws, code, room, character) {
   const player = {
     id: 'p' + nextId++, code, character, ws,
-    x: null, y: null, dir: 'down', moving: false, area: 'outside', // x/y stay null until the client sends its first state
+    x: null, y: null, dir: 'down', moving: false, area: 'outside', outfit: 0, // x/y stay null until the client sends its first state
   };
   ws.player = player;
   const peers = [...room.players.values()].map(publicPeer);
@@ -143,6 +145,18 @@ function handle(ws, msg) {
       const room = rooms.get(p.code);
       if (!room) return;
       const out = { t: 'gift', id: p.id, kind: 'flower' };
+      for (const other of room.players.values()) if (other.id !== p.id) send(other.ws, out);
+      return;
+    }
+    case 'outfit': {
+      const p = ws.player;
+      if (!p) return;
+      const index = Number(msg.index);
+      if (![0, 1, 2].includes(index)) return;
+      p.outfit = index;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const out = { t: 'outfit', id: p.id, index };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.ws, out);
       return;
     }

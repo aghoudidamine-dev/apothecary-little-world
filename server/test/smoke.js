@@ -78,6 +78,11 @@ assert.equal(inPalace.area, 'palace');
 a.send({ t: 'state', x: 10, y: 20, dir: 'down', moving: false, area: 'outside' });
 assert.equal((await b.next((m) => m.t === 'state')).area, 'outside');
 
+b.send({ t: 'outfit', index: 2 });
+const of = await a.next((m) => m.t === 'outfit');
+assert.deepEqual([of.id, of.index], [joined.id, 2]);
+b.send({ t: 'outfit', index: 9 }); // invalid, must be ignored
+
 b.send({ t: 'gift', kind: 'flower' });
 const gift = await a.next((m) => m.t === 'gift');
 assert.deepEqual([gift.id, gift.kind], [joined.id, 'flower']);

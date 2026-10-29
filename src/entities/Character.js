@@ -97,6 +97,13 @@ export class Character {
     this.sprite.play(`${this.key}_${this.moving ? 'walk' : 'idle'}_${this.dir}`, true);
   }
 
+  /** Switch which outfit texture this character renders with (same identity, new look). */
+  setOutfit(key) {
+    if (this.key === key) return;
+    this.key = key;
+    this.playAnim();
+  }
+
   setState(dir, moving) {
     if (dir === this.dir && moving === this.moving) return;
     this.dir = dir;

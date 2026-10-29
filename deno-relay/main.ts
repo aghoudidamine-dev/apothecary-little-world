@@ -9,6 +9,7 @@
 //                      {t:'resync'}
 //                      {t:'chat', text}
 //                      {t:'gift', kind}   kind: "flower"
+//                      {t:'outfit', index}   index: 0 | 1 | 2   (server also sends {t:'outfit', id, index}; peers carry `outfit`)
 //                      {t:'ping'}
 //   server -> client   {t:'created', code, id}
 //                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving, area}]}
@@ -35,6 +36,7 @@ type Player = {
   dir: string;
   moving: boolean;
   area: string;
+  outfit: number;
 };
 type Room = { players: Map<string, Player> };
 
@@ -58,7 +60,7 @@ const num = (v: unknown, fallback: number | null) =>
   typeof v === "number" && Number.isFinite(v) ? Math.max(-MAP_LIMIT, Math.min(MAP_LIMIT, v)) : fallback;
 
 function publicPeer(p: Player) {
-  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
+  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, outfit: p.outfit };
 }
 
 const sockets = new WeakMap<WebSocket, Player>();
@@ -77,7 +79,7 @@ function leaveRoom(ws: WebSocket) {
 function enterRoom(ws: WebSocket, code: string, room: Room, character: string) {
   const player: Player = {
     id: "p" + nextId++, code, character, socket: ws,
-    x: null, y: null, dir: "down", moving: false, area: "outside",
+    x: null, y: null, dir: "down", moving: false, area: "outside", outfit: 0,
   };
   sockets.set(ws, player);
   const peers = [...room.players.values()].map(publicPeer);
@@ -156,6 +158,18 @@ function handle(ws: WebSocket, msg: Record<string, unknown>) {
       const room = rooms.get(p.code);
       if (!room) return;
       const out = { t: "gift", id: p.id, kind: "flower" };
+      for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
+      return;
+    }
+    case "outfit": {
+      const p = sockets.get(ws);
+      if (!p) return;
+      const index = Number(msg.index);
+      if (![0, 1, 2].includes(index)) return;
+      p.outfit = index;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const out = { t: "outfit", id: p.id, index };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
       return;
     }

@@ -380,6 +380,29 @@ function drawBanner() {
   return outline(canvas, DARK);
 }
 
+function drawWardrobe() {
+  const { canvas, ctx } = newSprite(32, 48);
+  const wood = '#6b4530', woodLight = '#8a5c3f', woodDark = '#4a2f20', gold = '#e2b43c';
+  ellipse(ctx, 16, 46, 13, 3, 'rgba(20,10,10,0.3)');
+  // body
+  rect(ctx, 2, 6, 28, 38, wood);
+  rect(ctx, 2, 6, 28, 3, woodLight);
+  rect(ctx, 2, 41, 28, 3, woodDark);
+  // top cornice + little feet
+  rect(ctx, 0, 3, 32, 4, woodDark); rect(ctx, 0, 3, 32, 1, woodLight);
+  rect(ctx, 3, 44, 3, 4, woodDark); rect(ctx, 26, 44, 3, 4, woodDark);
+  // two doors with a center seam
+  rect(ctx, 4, 9, 11, 32, '#5a3a28'); rect(ctx, 17, 9, 11, 32, '#5a3a28');
+  rect(ctx, 4, 9, 11, 2, woodLight); rect(ctx, 17, 9, 11, 2, woodLight);
+  rect(ctx, 15, 9, 2, 32, woodDark);
+  // panel inlay + gold handles
+  rect(ctx, 6, 13, 7, 22, '#4a3020'); rect(ctx, 19, 13, 7, 22, '#4a3020');
+  rect(ctx, 6, 13, 7, 1, '#6b4530'); rect(ctx, 19, 13, 7, 1, '#6b4530');
+  rect(ctx, 12, 23, 2, 5, gold); rect(ctx, 18, 23, 2, 5, gold);
+  disc(ctx, 13, 25, 1, '#f6db7a'); disc(ctx, 19, 25, 1, '#f6db7a');
+  return outline(canvas, DARK);
+}
+
 export function buildObjectSprites() {
   const wallA = { wall: '#f0e2c0', beam: '#7a3f2b' };
   const sprites = {
@@ -401,6 +424,7 @@ export function buildObjectSprites() {
     stall1: drawStall('#4f9a62', '#f6ead0'),
     stall2: drawStall('#e8a93a', '#f6ead0'),
     palace: drawPalace(),
+    wardrobe: drawWardrobe(),
     throne: drawThrone(),
     pillar: drawPillar(),
     banner: drawBanner(),

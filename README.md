@@ -29,6 +29,8 @@ characters inside yet). Multiplayer stays fully live in there: if you're both in
 chat with each other exactly like outside; whoever's elsewhere only reappears once you're both
 in the same place again. Press E near the door to leave.
 
+**Wardrobe:** a wooden wardrobe stands in the courtyard east of the palace steps. Walk up and press E to cycle through 3 outfits for your character; the other player sees the change live, and it stays when you go in and out of the palace.
+
 **Giving a flower:** playing as Jinshi, walk up to Maomao's player and an "E - Give Flower"
 prompt appears. Press E and a flower tosses over to her in a little arc, then she gives a happy
 bounce with a couple of hearts — visible on both screens.

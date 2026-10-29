@@ -1,4 +1,5 @@
 import { Character } from '../entities/Character.js';
+import { outfitKey } from '../art/characters.js';
 
 export const CHARACTER_LABEL = { maomao: 'MAOMAO', jinshi: 'JINSHI' };
 // Only two character slots ever exist in a room, so the other player's character
@@ -47,7 +48,7 @@ export class AreaSync {
         // a state message never carries `character` (see server protocol) — if this is
         // the first time we're seeing this id in this area, borrow it from session.peers
         // (known since they joined the room) so a brand-new avatar isn't built without one
-        const withCharacter = m.character ? m : { ...m, character: (this.remotes.get(m.id)?.character) || peer?.character };
+        const withCharacter = m.character ? m : { ...m, character: (this.remotes.get(m.id)?.character) || peer?.character, outfit: peer?.outfit };
         const hadRemote = this.remotes.has(m.id);
         if (relevant(m)) this.updateRemote(withCharacter); else this.removeRemote(m.id);
         // a plain state update can be the first sign someone just entered/left this
@@ -60,6 +61,12 @@ export class AreaSync {
         const character = (r && r.character) || (peer && peer.character) || OTHER_CHARACTER[session.character];
         if (r) r.char.showChat(m.text);
         this.onChat(CHARACTER_LABEL[character] || 'PLAYER', m.text);
+      })
+      .on('outfit', (m) => {
+        const peer = (session.peers || []).find((p) => p.id === m.id);
+        if (peer) peer.outfit = m.index;
+        const r = this.remotes.get(m.id);
+        if (r) r.char.setOutfit(outfitKey(r.character, m.index));
       })
       .on('resync', (m) => {
         session.peers = m.peers;
@@ -76,6 +83,7 @@ export class AreaSync {
     if (this.remotes.has(p.id)) { this.updateRemote(p); return; }
     const c = new Character(this.scene, p.character, 0, 0, CHARACTER_LABEL[p.character] || 'PLAYER');
     const known = Number.isFinite(p.x) && Number.isFinite(p.y);
+    if (p.outfit) c.setOutfit(outfitKey(p.character, p.outfit));
     if (known) { c.setPosition(p.x, p.y); c.setState(p.dir || 'down', false); }
     c.setVisible(known);
     this.remotes.set(p.id, { char: c, character: p.character, tx: p.x, ty: p.y, dir: p.dir || 'down', moving: !!p.moving, known });

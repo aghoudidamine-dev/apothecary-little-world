@@ -7,6 +7,7 @@ import { hud } from '../ui/hud.js';
 import { dialogue } from '../ui/dialogue.js';
 import { chat } from '../ui/chat.js';
 import { AreaSync, CHARACTER_LABEL } from '../multiplayer/areaSync.js';
+import { outfitKey } from '../art/characters.js';
 
 const SPEED = 72;
 
@@ -48,6 +49,7 @@ export class PalaceInterior extends Phaser.Scene {
 
     this.me = new Character(this, session.character, map.spawn.x, map.spawn.y, CHARACTER_LABEL[session.character]);
     this.me.setState('up', false);
+    this.me.setOutfit(outfitKey(session.character, session.outfitIndex || 0));
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, map.W * 16, map.H * 16);

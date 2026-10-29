@@ -30,6 +30,31 @@ export const CHARACTER_SPECS = {
     trim: '#e9c25a', sash: '#e9c25a', shoes: '#241d3d',
     style: 'long', accessory: 'pin', freckles: false, eye: '#1a1538',
   },
+  // ---- wardrobe outfit variants (same hair/identity, different clothes) ----
+  maomao_o2: { // palace lady-in-waiting
+    label: 'Maomao', hair: '#1e4f55', hairLight: '#2f7a7a', hairShadow: '#143a40',
+    robe: '#a8c9d9', robeLight: '#d2e6ee', robeDark: '#7fa8ba',
+    trim: '#ffffff', sash: '#e8d38c', shoes: '#3b2c30',
+    style: 'bob', accessory: 'ribbon', freckles: true, eye: '#1d2b33',
+  },
+  maomao_o3: { // festival formal
+    label: 'Maomao', hair: '#1e4f55', hairLight: '#2f7a7a', hairShadow: '#143a40',
+    robe: '#a8324a', robeLight: '#d65f78', robeDark: '#7a1f32',
+    trim: '#f2d16a', sash: '#f2d16a', shoes: '#3b2c30',
+    style: 'bob', accessory: 'ribbon', freckles: true, eye: '#1d2b33',
+  },
+  jinshi_o2: { // off-duty casual
+    label: 'Jinshi', hair: '#2b2350', hairLight: '#463a80', hairShadow: '#1a1538',
+    robe: '#e3ddc8', robeLight: '#f5f0dd', robeDark: '#c2baa0',
+    trim: '#8fa8c9', sash: '#8fa8c9', shoes: '#4a4332',
+    style: 'long', accessory: 'none', freckles: false, eye: '#1a1538',
+  },
+  jinshi_o3: { // formal court ensemble
+    label: 'Jinshi', hair: '#2b2350', hairLight: '#463a80', hairShadow: '#1a1538',
+    robe: '#1c1a26', robeLight: '#3a3650', robeDark: '#100f16',
+    trim: '#f2d16a', sash: '#f2d16a', shoes: '#0c0b10',
+    style: 'long', accessory: 'pin', freckles: false, eye: '#1a1538',
+  },
   guard: {
     label: 'Guard',
     hair: '#3a2a26', hairLight: '#54403a', hairShadow: '#241a18',
@@ -108,6 +133,25 @@ export const CHARACTER_SPECS = {
     style: 'short', accessory: 'none', freckles: false, eye: '#1c1a16',
   },
 };
+
+/** Wardrobe outfit options for the two playable characters, in display order. */
+export const OUTFITS = {
+  maomao: [
+    { key: 'maomao', name: 'Apothecary Robes' },
+    { key: 'maomao_o2', name: "Lady-in-Waiting" },
+    { key: 'maomao_o3', name: 'Festival Red' },
+  ],
+  jinshi: [
+    { key: 'jinshi', name: 'Official Robes' },
+    { key: 'jinshi_o2', name: 'Off-Duty' },
+    { key: 'jinshi_o3', name: 'Court Formal' },
+  ],
+};
+
+/** Texture key for a base character ('maomao' | 'jinshi') wearing outfit `index` (0-2). */
+export function outfitKey(character, index) {
+  return OUTFITS[character]?.[index]?.key || character;
+}
 
 // ---------------------------------------------------------------------------
 
