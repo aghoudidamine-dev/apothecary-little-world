@@ -1,5 +1,12 @@
 const lerp = (a, b, t) => a + (b - a) * t;
 
+/** Which way `a` should face to look at `b`. */
+export function facingToward(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+  return dy > 0 ? 'down' : 'up';
+}
+
 /**
  * Tosses a small gift icon from `fromChar` to `toChar` in a gentle arc, then
  * calls `toChar.showGift(kind)` once it lands. Runs the same way on whichever

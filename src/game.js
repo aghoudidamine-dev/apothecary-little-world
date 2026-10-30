@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene.js';
 import { GameScene } from './scenes/GameScene.js';
 import { PalaceInterior } from './scenes/PalaceInterior.js';
+import { HomeInterior } from './scenes/HomeInterior.js';
 
 /** Start the Phaser game for a chosen character (and optional network session). */
 export function startGame(session) {
@@ -15,7 +16,7 @@ export function startGame(session) {
     roundPixels: true,
     disableContextMenu: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [BootScene, GameScene, PalaceInterior],
+    scene: [BootScene, GameScene, PalaceInterior, HomeInterior],
     callbacks: {
       preBoot: (g) => g.registry.set('session', session),
     },

@@ -3,7 +3,7 @@
 // Protocol (JSON text frames):
 //   client -> server   {t:'create', character}
 //                      {t:'join', code, character}
-//                      {t:'state', x, y, dir, moving, area}   area: 'outside' | 'palace'
+//                      {t:'state', x, y, dir, moving, area}   area: 'outside' | 'palace' | 'home'
 //                      {t:'resync'}
 //                      {t:'chat', text}
 //                      {t:'gift', kind}   kind: 'flower'
@@ -25,7 +25,7 @@ export const MAX_PLAYERS = 2;
 export const CHARACTERS = ['maomao', 'jinshi'];
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no O/0/I/1 lookalikes
 const DIRS = ['down', 'left', 'right', 'up'];
-const AREAS = ['outside', 'palace'];
+const AREAS = ['outside', 'palace', 'home'];
 const MAP_LIMIT = 4000; // px, generous bound just to reject garbage
 
 const rooms = new Map(); // code -> { players: Map<id, player> }

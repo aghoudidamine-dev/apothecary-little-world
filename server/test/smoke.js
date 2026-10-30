@@ -78,6 +78,11 @@ assert.equal(inPalace.area, 'palace');
 a.send({ t: 'state', x: 10, y: 20, dir: 'down', moving: false, area: 'outside' });
 assert.equal((await b.next((m) => m.t === 'state')).area, 'outside');
 
+a.send({ t: 'state', x: 1, y: 2, dir: 'up', moving: false, area: 'home' });
+assert.equal((await b.next((m) => m.t === 'state')).area, 'home');
+a.send({ t: 'state', x: 1, y: 2, dir: 'up', moving: false, area: 'outside' });
+await b.next((m) => m.t === 'state');
+
 b.send({ t: 'outfit', index: 2 });
 const of = await a.next((m) => m.t === 'outfit');
 assert.deepEqual([of.id, of.index], [joined.id, 2]);

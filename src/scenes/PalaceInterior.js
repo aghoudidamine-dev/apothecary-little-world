@@ -78,6 +78,7 @@ export class PalaceInterior extends Phaser.Scene {
       onChat: (label, text) => chat.addLine(label, text),
     });
     if (session.net) {
+      session.net.on('gift', () => {});
       session.net.on('close', () => hud.notice('Connection lost. Leave and rejoin the room to keep playing together.'));
     }
   }

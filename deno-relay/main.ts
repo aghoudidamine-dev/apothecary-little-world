@@ -5,7 +5,7 @@
 // Protocol (JSON text frames), unchanged from the Node version:
 //   client -> server   {t:'create', character}
 //                      {t:'join', code, character}
-//                      {t:'state', x, y, dir, moving, area}   area: "outside" | "palace"
+//                      {t:'state', x, y, dir, moving, area}   area: "outside" | "palace" | "home"
 //                      {t:'resync'}
 //                      {t:'chat', text}
 //                      {t:'gift', kind}   kind: "flower"
@@ -22,7 +22,7 @@
 const MAX_PLAYERS = 2;
 const CHARACTERS = ["maomao", "jinshi"];
 const DIRS = ["down", "left", "right", "up"];
-const AREAS = ["outside", "palace"];
+const AREAS = ["outside", "palace", "home"];
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 lookalikes
 const MAP_LIMIT = 4000;
 

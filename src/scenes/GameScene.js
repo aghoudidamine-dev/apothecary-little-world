@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TILE, W, H, SPAWNS, PALACE_DOOR, PALACE_RETURN, WARDROBE_SPOT } from '../world/mapData.js';
+import { TILE, W, H, SPAWNS, PALACE_DOOR, PALACE_RETURN, HOME_DOOR, HOME_RETURN } from '../world/mapData.js';
 import { moveWithCollision } from '../world/collision.js';
 import { NPC_DIALOGUE } from '../world/npcs.js';
 import { Character } from '../entities/Character.js';
@@ -7,22 +7,14 @@ import { makeLabel } from '../art/environment.js';
 import { hud } from '../ui/hud.js';
 import { dialogue } from '../ui/dialogue.js';
 import { chat } from '../ui/chat.js';
-import { playGiftToss } from '../entities/gifts.js';
-import { OUTFITS, outfitKey } from '../art/characters.js';
+import { playGiftToss, facingToward } from '../entities/gifts.js';
+import { outfitKey } from '../art/characters.js';
 import { AreaSync, CHARACTER_LABEL } from '../multiplayer/areaSync.js';
 
 const SPEED = 72;            // px per second (16px tiles)
 const INTERACT_DIST = 26;    // how close you must be to an NPC to talk
 const DOOR_DIST = 24;        // how close you must be to the palace door to enter
-const WARDROBE_DIST = 26;    // how close you must be to the wardrobe to change outfits
 const GIFT_DIST = 28;        // how close Jinshi must be to Maomao to offer a flower
-
-/** Which way `a` should face to look at `b`. */
-function facingToward(a, b) {
-  const dx = b.x - a.x, dy = b.y - a.y;
-  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
-  return dy > 0 ? 'down' : 'up';
-}
 
 export class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -80,7 +72,7 @@ export class GameScene extends Phaser.Scene {
 
     // Talk / dialogue keys are handled as events (not polled) so a very quick tap is never missed.
     const once = (fn) => (e) => { if (!e || !e.repeat) fn(); };
-    kb.on('keydown-E', once(() => this.tryTalk() || this.tryEnterPalace() || this.tryChangeOutfit() || this.tryGiveFlower()));
+    kb.on('keydown-E', once(() => this.tryTalk() || this.tryEnterPalace() || this.tryEnterHome() || this.tryGiveFlower()));
     kb.on('keydown-SPACE', once(() => { if (dialogue.isOpen) dialogue.advance(); }));
     kb.on('keydown-ENTER', once(() => {
       if (dialogue.isOpen) return dialogue.advance();
@@ -146,14 +138,9 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
 
-  tryChangeOutfit() {
-    if (!this.nearWardrobe || dialogue.isOpen || chat.isOpen) return false;
-    const s = this.session;
-    s.outfitIndex = ((s.outfitIndex || 0) + 1) % OUTFITS[s.character].length;
-    this.me.setOutfit(outfitKey(s.character, s.outfitIndex));
-    hud.notice('Now wearing: ' + OUTFITS[s.character][s.outfitIndex].name);
-    setTimeout(() => hud.notice(''), 1800);
-    if (s.net) s.net.send({ t: 'outfit', index: s.outfitIndex });
+  tryEnterHome() {
+    if (!this.nearHome || dialogue.isOpen || chat.isOpen) return false;
+    this.scene.start('Home', { returnSpawn: HOME_RETURN });
     return true;
   }
 
@@ -201,11 +188,11 @@ export class GameScene extends Phaser.Scene {
     this.nearNpc = near;
     this.nearDoor = !near && Math.hypot(PALACE_DOOR.x - me.x, PALACE_DOOR.y - me.y) < DOOR_DIST;
 
-    this.nearWardrobe = !near && !this.nearDoor && Math.hypot(WARDROBE_SPOT.x - me.x, WARDROBE_SPOT.y - me.y) < WARDROBE_DIST;
+    this.nearHome = !near && !this.nearDoor && Math.hypot(HOME_DOOR.x - me.x, HOME_DOOR.y - me.y) < DOOR_DIST;
 
     // Jinshi, near Maomao's player: offer to give a flower
     this.nearPartner = null;
-    if (!near && !this.nearDoor && !this.nearWardrobe && this.session.character === 'jinshi') {
+    if (!near && !this.nearDoor && !this.nearHome && this.session.character === 'jinshi') {
       let gbest = GIFT_DIST;
       for (const r of this.areaSync.remotes.values()) {
         if (!r.known) continue;
@@ -217,7 +204,7 @@ export class GameScene extends Phaser.Scene {
     if (dialogue.isOpen || chat.isOpen) hud.prompt('');
     else if (near) hud.prompt('E - Talk');
     else if (this.nearDoor) hud.prompt('E - Enter');
-    else if (this.nearWardrobe) hud.prompt('E - Change Outfit');
+    else if (this.nearHome) hud.prompt('E - Go Inside');
     else if (this.nearPartner) hud.prompt('E - Give Flower');
     else hud.prompt('');
 

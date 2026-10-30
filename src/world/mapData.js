@@ -12,8 +12,9 @@ export const G = { GRASS: 0, DIRT: 1, PLAZA: 2, WATER: 3, COBBLE: 4, BRICK: 5 };
 export const PALACE_DOOR = { x: 28 * TILE, y: 13 * TILE + 2 };
 export const PALACE_RETURN = { x: 28 * TILE, y: 15 * TILE };
 
-// A wardrobe in the courtyard where either player can change outfits.
-export const WARDROBE_SPOT = { x: 33 * TILE + 16, y: 16 * TILE + 30 };
+// Door of the west house (their shared home), on the dirt path just below it.
+export const HOME_DOOR = { x: 9 * TILE, y: 9 * TILE + 8 };
+export const HOME_RETURN = { x: 9 * TILE, y: 11 * TILE };
 
 export const SPAWNS = {
   maomao: { x: 26 * TILE + 8, y: 16 * TILE + 14 },
@@ -107,7 +108,6 @@ export function buildMap() {
   add('stall2', 31, 30, 4, 2);
   add('crate', 22, 29); add('barrel', 23, 29); add('crate', 21, 30); add('barrel', 20, 25);
   add('crate', 34, 28);  add('barrel', 30, 31);
-  add('wardrobe', 33, 15, 2, 2);
 
   // ---- courtyard dressing -------------------------------------------------
   [[18, 14], [37, 14], [18, 21], [37, 21], [25, 18], [30, 18], [25, 21], [30, 21]]
