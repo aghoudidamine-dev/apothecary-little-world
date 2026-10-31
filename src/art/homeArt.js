@@ -107,28 +107,109 @@ function drawChest() {
   return outline(canvas, DARK);
 }
 
+
+function drawToilet() {
+  const { canvas, ctx } = sprite(32, 32);
+  ellipse(ctx, 16, 30, 13, 2, 'rgba(20,10,10,0.25)');
+  rect(ctx, 6, 0, 20, 9, '#8a5c3f'); rect(ctx, 6, 0, 20, 2, '#a87650'); px(ctx, 16, 3, GOLD);
+  rect(ctx, 2, 14, 28, 16, '#7a5238'); rect(ctx, 4, 18, 24, 10, WOOD); rect(ctx, 15, 18, 2, 10, WOOD_DARK);
+  px(ctx, 12, 23, GOLD); px(ctx, 19, 23, GOLD);
+  rect(ctx, 0, 10, 32, 6, '#a87650'); rect(ctx, 0, 10, 32, 1, '#c99a6e');
+  ellipse(ctx, 16, 13, 7, 2, '#2b1a14'); ellipse(ctx, 16, 13, 5, 1, WOOD_DARK);
+  return outline(canvas, DARK);
+}
+function drawDivider() {
+  const { canvas, ctx } = sprite(16, 32);
+  rect(ctx, 2, 2, 3, 28, WOOD_DARK); rect(ctx, 11, 2, 3, 28, WOOD_DARK);
+  [4, 11, 18, 25].forEach((y) => { rect(ctx, 2, y, 12, 4, '#8a5c3f'); rect(ctx, 2, y, 12, 1, '#a87650'); });
+  return outline(canvas, DARK);
+}
+function drawBucket() {
+  const { canvas, ctx } = sprite(16, 16);
+  ellipse(ctx, 8, 14, 6, 2, 'rgba(20,10,10,0.2)');
+  rect(ctx, 3, 6, 10, 9, '#a87650'); rect(ctx, 3, 6, 2, 9, '#c99a6e');
+  rect(ctx, 3, 8, 10, 1, '#4a3a34'); rect(ctx, 3, 12, 10, 1, '#4a3a34');
+  ellipse(ctx, 8, 6, 5, 2, '#a9c765'); px(ctx, 3, 3, '#4a3a34'); px(ctx, 13, 3, '#4a3a34'); rect(ctx, 4, 2, 8, 1, '#4a3a34');
+  return outline(canvas, DARK);
+}
+function drawBasin() {
+  const { canvas, ctx } = sprite(16, 24);
+  ellipse(ctx, 8, 22, 6, 2, 'rgba(20,10,10,0.2)');
+  rect(ctx, 3, 12, 2, 11, WOOD); rect(ctx, 11, 12, 2, 11, WOOD);
+  ellipse(ctx, 8, 11, 7, 3, '#e8e2d0'); ellipse(ctx, 8, 10, 6, 2, '#bfe3f2');
+  rect(ctx, 13, 11, 3, 8, '#f6ecd6'); rect(ctx, 13, 11, 3, 1, '#d9ccb0');
+  return outline(canvas, DARK);
+}
+function drawStool() {
+  const { canvas, ctx } = sprite(16, 16);
+  ellipse(ctx, 8, 14, 5, 1, 'rgba(20,10,10,0.2)');
+  rect(ctx, 3, 9, 2, 6, WOOD_DARK); rect(ctx, 11, 9, 2, 6, WOOD_DARK);
+  ellipse(ctx, 8, 8, 6, 3, '#a87650'); ellipse(ctx, 8, 7, 5, 2, '#c99a6e');
+  return outline(canvas, DARK);
+}
+function drawTowelRack() {
+  const { canvas, ctx } = sprite(32, 24);
+  rect(ctx, 1, 2, 3, 22, WOOD); rect(ctx, 28, 2, 3, 22, WOOD); rect(ctx, 1, 3, 30, 2, WOOD_LIGHT);
+  rect(ctx, 5, 5, 9, 12, '#f6ecd6'); rect(ctx, 5, 12, 9, 2, '#d9ccb0');
+  rect(ctx, 17, 5, 9, 10, '#e0eef2'); rect(ctx, 17, 11, 9, 2, '#bcd4dc');
+  return outline(canvas, DARK);
+}
+
 export function buildHomeSprites() {
   return {
     bed: drawBed(), table: drawTable(), cushion: drawCushion(), bookshelf: drawBookshelf(),
     cabinet: drawCabinet(), stove: drawStove(), window: drawWindow(), plant: drawPlant(), chest: drawChest(),
+    toilet: drawToilet(), divider: drawDivider(), bucket: drawBucket(), basin: drawBasin(), stool: drawStool(), towelrack: drawTowelRack(),
   };
 }
 
-/** Bakes plaster back wall, plank floor, and the rose rug. */
+/** Bakes the back wall, plank/stone floors, partition walls, the bath water and the rugs. */
 export function bakeHomeGround(map) {
   const canvas = makeCanvas(map.W * TILE, map.H * TILE);
   const ctx = canvas.getContext('2d');
   const rand = rng(5);
-  const isRug = (x, y) => x >= 0 && y >= 0 && x < map.W && y < map.H && map.ground[y * map.W + x] === FLOOR.RUG;
+  const at = (x, y) => (x >= 0 && y >= 0 && x < map.W && y < map.H ? map.ground[y * map.W + x] : -1);
+  const isRug = (x, y) => at(x, y) === FLOOR.RUG;
+  const isWater = (x, y) => at(x, y) === FLOOR.WATER;
   for (let ty = 0; ty < map.H; ty++) {
     for (let tx = 0; tx < map.W; tx++) {
-      const x = tx * TILE, y = ty * TILE;
-      if (ty < 2) { // plaster wall with timber posts
+      const x = tx * TILE, y = ty * TILE, k = at(tx, ty);
+      if (ty < 2) { // plaster back wall with timber posts
         rect(ctx, x, y, TILE, TILE, rand() < 0.5 ? '#efdcc0' : '#ead6b8');
         if (ty === 0) rect(ctx, x, y, TILE, 3, '#5a3a28');
         if (tx % 7 === 0) rect(ctx, x + 6, y, 4, TILE, WOOD);
         if (ty === 1) { rect(ctx, x, y + 13, TILE, 3, WOOD); rect(ctx, x, y + 13, TILE, 1, WOOD_LIGHT); }
-      } else if (isRug(tx, ty)) {
+      } else if (k === FLOOR.WALL || k === FLOOR.STONEWALL) {
+        const stone = k === FLOOR.STONEWALL;
+        const south = at(tx, ty + 1);
+        const wallBelow = south === FLOOR.WALL || south === FLOOR.STONEWALL || south === -1;
+        const cap = stone ? '#6a6f75' : '#6b4530', capHi = stone ? '#8a9096' : WOOD_LIGHT;
+        if (wallBelow) { // solid top of a wall running on
+          rect(ctx, x, y, TILE, TILE, cap); rect(ctx, x, y, TILE, 2, capHi); rect(ctx, x + 7, y, 2, TILE, 'rgba(0,0,0,0.12)');
+        } else { // wall end/face: cap, then the visible front face
+          rect(ctx, x, y, TILE, 6, cap); rect(ctx, x, y, TILE, 2, capHi);
+          if (stone) {
+            rect(ctx, x, y + 6, TILE, 10, '#8b9097');
+            for (let r = 0; r < 2; r++) { const yy = y + 10 + r * 4; rect(ctx, x, yy, TILE, 1, '#6b7076'); rect(ctx, x + ((r + tx) % 2 ? 4 : 10), yy - 4, 1, 4, '#6b7076'); }
+            rect(ctx, x, y + 6, TILE, 1, '#6b7076');
+            if (ty === 10 && (tx === 3 || tx === 7)) { rect(ctx, x + 4, y + 6, 8, 10, WOOD); rect(ctx, x + 4, y + 6, 2, 10, WOOD_LIGHT); }
+          } else {
+            rect(ctx, x, y + 6, TILE, 10, '#e2cfae'); rect(ctx, x, y + 13, TILE, 3, '#6b4530');
+          }
+        }
+      } else if (k === FLOOR.WATER) {
+        rect(ctx, x, y, TILE, TILE, (tx + ty) % 2 ? '#a9c765' : '#a2c05f');
+        for (let i = 0; i < 2; i++) rect(ctx, x + 1 + Math.floor(rand() * 9), y + 3 + Math.floor(rand() * 9), 4, 1, '#c4dc82');
+        if (!isWater(tx, ty - 1)) rect(ctx, x, y, TILE, 2, '#8aa850');
+        if (!isWater(tx - 1, ty)) rect(ctx, x, y, 2, TILE, '#8aa850');
+      } else if (k === FLOOR.STONE) {
+        rect(ctx, x, y, TILE, TILE, (tx + ty) % 2 ? '#9da3a6' : '#969ca0');
+        rect(ctx, x, y + 7, TILE, 1, '#7d8386'); rect(ctx, x + 7, y, 1, TILE, '#7d8386');
+        if (isWater(tx, ty + 1)) rect(ctx, x, y + 13, TILE, 3, '#d0d4d4');
+        if (isWater(tx, ty - 1)) rect(ctx, x, y, TILE, 3, '#d0d4d4');
+        if (isWater(tx - 1, ty)) rect(ctx, x, y, 3, TILE, '#d0d4d4');
+        if (isWater(tx + 1, ty)) rect(ctx, x + 13, y, 3, TILE, '#d0d4d4');
+      } else if (k === FLOOR.RUG) {
         rect(ctx, x, y, TILE, TILE, '#b84e63');
         if ((tx + ty) % 2 === 0) rect(ctx, x + 6, y + 6, 4, 4, '#cf6a80');
         if (!isRug(tx, ty - 1)) { rect(ctx, x, y, TILE, 2, '#f2e3c8'); rect(ctx, x, y + 2, TILE, 2, '#8f3347'); }

@@ -1,7 +1,7 @@
 // Sanity checks for the map: spawns are walkable, NPCs are reachable, no sealed-off areas.
 import assert from 'node:assert/strict';
 import { buildMap, W, H, TILE, SPAWNS, G, HOME_DOOR, HOME_RETURN } from '../src/world/mapData.js';
-import { buildHomeMap, ENTRY_SPAWN, WARDROBE_SPOT, DOOR_SPOT } from '../src/world/homeMap.js';
+import { buildHomeMap, ENTRY_SPAWN, WARDROBE_SPOT, DOOR_SPOT, ROOM_SPOTS } from '../src/world/homeMap.js';
 import { isBlockedBox, moveWithCollision } from '../src/world/collision.js';
 
 const map = buildMap();
@@ -35,7 +35,7 @@ for (const [name, pt] of Object.entries({ HOME_DOOR, HOME_RETURN })) {
 }
 // home interior: spawn, door and wardrobe standing spot are walkable and connected
 const home = buildHomeMap();
-for (const [name, pt] of Object.entries({ ENTRY_SPAWN, WARDROBE_SPOT, DOOR_SPOT })) {
+for (const [name, pt] of Object.entries({ ENTRY_SPAWN, WARDROBE_SPOT, DOOR_SPOT, ...ROOM_SPOTS })) {
   assert.equal(isBlockedBox(home, pt.x, pt.y), false, `home ${name} is blocked`);
 }
 let walkable = 0, orphan = 0;
@@ -55,5 +55,5 @@ assert.ok(p.y >= 13 * TILE, 'walked into palace');
 const hseen = new Uint8Array(home.W * home.H);
 const hq = [{ x: Math.floor(ENTRY_SPAWN.x / TILE), y: Math.floor(ENTRY_SPAWN.y / TILE) }]; hseen[hq[0].y * home.W + hq[0].x] = 1;
 while (hq.length) { const { x, y } = hq.pop(); for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const nx = x+dx, ny = y+dy; if (nx<0||ny<0||nx>=home.W||ny>=home.H) continue; const i = ny*home.W+nx; if (hseen[i]||home.blocked[i]) continue; hseen[i]=1; hq.push({x:nx,y:ny}); } }
-for (const [name, pt] of Object.entries({ WARDROBE_SPOT, DOOR_SPOT })) assert.equal(hseen[Math.floor(pt.y / TILE) * home.W + Math.floor(pt.x / TILE)], 1, `home ${name} not reachable`);
+for (const [name, pt] of Object.entries({ WARDROBE_SPOT, DOOR_SPOT, ...ROOM_SPOTS })) assert.equal(hseen[Math.floor(pt.y / TILE) * home.W + Math.floor(pt.x / TILE)], 1, `home ${name} not reachable`);
 console.log('world checks: OK');

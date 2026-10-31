@@ -29,7 +29,7 @@ characters inside yet). Multiplayer stays fully live in there: if you're both in
 chat with each other exactly like outside; whoever's elsewhere only reappears once you're both
 in the same place again. Press E near the door to leave.
 
-**Home:** the west house (reached by the dirt path from the courtyard) is your shared home. Walk up to its door and press E to go inside: a cozy room with a bed, tea table, bookshelf, herb cabinet, stove and a wardrobe. Online sync works inside just like outside (chat and flowers too). Press E beside the wardrobe to cycle through your 3 outfits; the other player sees it live and it stays when you leave. Press E at the door to go back out.
+**Home:** the west house (reached by the dirt path from the courtyard) is your shared home. Walk up to its door and press E to go inside. The living room has a tea table, bookshelf, herb cabinet and the wardrobe; the bedroom (top-left, with the stove) has the bed; below it is the stone bathroom with the green pool; and the two-stall toilet room is on the right. These rooms are decoration only. Online sync works inside just like outside (chat and flowers too). Press E beside the wardrobe to cycle through your 3 outfits; the other player sees it live and it stays when you leave. Press E at the front door to go back out.
 
 **Giving a flower:** playing as Jinshi, walk up to Maomao's player and an "E - Give Flower"
 prompt appears. Press E and a flower tosses over to her in a little arc, then she gives a happy
