@@ -23,7 +23,7 @@ export class AreaSync {
     this.onPlayerCount = onPlayerCount || (() => {});
     this.onChat = onChat || (() => {});
     this.remotes = new Map();
-    this.lastSent = { t: -1e9, x: NaN, y: NaN, dir: '', moving: null };
+    this.lastSent = { t: -1e9, x: NaN, y: NaN, dir: '', moving: null, pose: '' };
     if (!session.net) return;
 
     const net = session.net;
@@ -44,7 +44,7 @@ export class AreaSync {
       })
       .on('state', (m) => {
         const peer = (session.peers || []).find((p) => p.id === m.id);
-        if (peer) { peer.x = m.x; peer.y = m.y; peer.dir = m.dir; peer.moving = m.moving; peer.area = m.area; }
+        if (peer) { peer.x = m.x; peer.y = m.y; peer.dir = m.dir; peer.moving = m.moving; peer.area = m.area; peer.pose = m.pose; }
         // a state message never carries `character` (see server protocol) — if this is
         // the first time we're seeing this id in this area, borrow it from session.peers
         // (known since they joined the room) so a brand-new avatar isn't built without one
@@ -84,9 +84,10 @@ export class AreaSync {
     const c = new Character(this.scene, p.character, 0, 0, CHARACTER_LABEL[p.character] || 'PLAYER');
     const known = Number.isFinite(p.x) && Number.isFinite(p.y);
     if (p.outfit) c.setOutfit(outfitKey(p.character, p.outfit));
+    if (p.pose && p.pose !== 'stand') c.setPose(p.pose, { depth: p.poseDepth });
     if (known) { c.setPosition(p.x, p.y); c.setState(p.dir || 'down', false); }
     c.setVisible(known);
-    this.remotes.set(p.id, { char: c, character: p.character, tx: p.x, ty: p.y, dir: p.dir || 'down', moving: !!p.moving, known });
+    this.remotes.set(p.id, { char: c, character: p.character, tx: p.x, ty: p.y, dir: p.dir || 'down', moving: !!p.moving, known, pose: p.pose || 'stand' });
   }
 
   updateRemote(m) {
@@ -95,6 +96,8 @@ export class AreaSync {
     if (!Number.isFinite(m.x) || !Number.isFinite(m.y)) return;
     if (!r.known) { r.known = true; r.char.setPosition(m.x, m.y); r.char.setVisible(true); }
     r.tx = m.x; r.ty = m.y; r.moving = !!m.moving; r.dir = m.dir;
+    const pose = m.pose || 'stand';
+    if (pose !== r.pose) { r.pose = pose; r.char.setPose(pose); }
   }
 
   removeRemote(id) {
@@ -125,10 +128,10 @@ export class AreaSync {
     if (!net || !net.open) return;
     const me = this.scene.me, last = this.lastSent;
     const x = Math.round(me.x * 10) / 10, y = Math.round(me.y * 10) / 10;
-    const changed = x !== last.x || y !== last.y || me.dir !== last.dir || me.moving !== last.moving;
+    const changed = x !== last.x || y !== last.y || me.dir !== last.dir || me.moving !== last.moving || me.pose !== last.pose;
     const due = now - last.t;
     if (!force && !((changed && due >= SEND_EVERY_MS) || due >= HEARTBEAT_MS)) return;
-    net.sendState({ x, y, dir: me.dir, moving: me.moving, area: this.area });
-    this.lastSent = { t: now, x, y, dir: me.dir, moving: me.moving };
+    net.sendState({ x, y, dir: me.dir, moving: me.moving, area: this.area, pose: me.pose });
+    this.lastSent = { t: now, x, y, dir: me.dir, moving: me.moving, pose: me.pose };
   }
 }

@@ -83,6 +83,13 @@ assert.equal((await b.next((m) => m.t === 'state')).area, 'home');
 a.send({ t: 'state', x: 1, y: 2, dir: 'up', moving: false, area: 'outside' });
 await b.next((m) => m.t === 'state');
 
+a.send({ t: 'state', x: 1, y: 2, dir: 'down', moving: false, area: 'home', pose: 'bath' });
+assert.equal((await b.next((m) => m.t === 'state')).pose, 'bath');
+a.send({ t: 'state', x: 1, y: 2, dir: 'down', moving: false, area: 'outside', pose: 'bogus' });
+assert.equal((await b.next((m) => m.t === 'state')).pose, 'bath'); // invalid pose ignored
+a.send({ t: 'state', x: 1, y: 2, dir: 'down', moving: false, area: 'outside', pose: 'stand' });
+await b.next((m) => m.t === 'state');
+
 b.send({ t: 'outfit', index: 2 });
 const of = await a.next((m) => m.t === 'outfit');
 assert.deepEqual([of.id, of.index], [joined.id, 2]);

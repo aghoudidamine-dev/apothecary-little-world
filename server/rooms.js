@@ -3,7 +3,7 @@
 // Protocol (JSON text frames):
 //   client -> server   {t:'create', character}
 //                      {t:'join', code, character}
-//                      {t:'state', x, y, dir, moving, area}   area: 'outside' | 'palace' | 'home'
+//                      {t:'state', x, y, dir, moving, area, pose}   pose: 'stand' | 'bath' | 'sleep'   area: 'outside' | 'palace' | 'home'
 //                      {t:'resync'}
 //                      {t:'chat', text}
 //                      {t:'gift', kind}   kind: 'flower'
@@ -26,6 +26,7 @@ export const CHARACTERS = ['maomao', 'jinshi'];
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no O/0/I/1 lookalikes
 const DIRS = ['down', 'left', 'right', 'up'];
 const AREAS = ['outside', 'palace', 'home'];
+const POSES = ['stand', 'bath', 'sleep'];
 const MAP_LIMIT = 4000; // px, generous bound just to reject garbage
 
 const rooms = new Map(); // code -> { players: Map<id, player> }
@@ -47,7 +48,7 @@ const send = (ws, msg) => {
 const num = (v, fallback) => (Number.isFinite(v) ? Math.max(-MAP_LIMIT, Math.min(MAP_LIMIT, v)) : fallback);
 
 function publicPeer(p) {
-  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, outfit: p.outfit };
+  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, outfit: p.outfit, pose: p.pose };
 }
 
 function leaveRoom(ws) {
@@ -64,7 +65,7 @@ function leaveRoom(ws) {
 function enterRoom(ws, code, room, character) {
   const player = {
     id: 'p' + nextId++, code, character, ws,
-    x: null, y: null, dir: 'down', moving: false, area: 'outside', outfit: 0, // x/y stay null until the client sends its first state
+    x: null, y: null, dir: 'down', moving: false, area: 'outside', outfit: 0, pose: 'stand', // x/y stay null until the client sends its first state
   };
   ws.player = player;
   const peers = [...room.players.values()].map(publicPeer);
@@ -111,9 +112,10 @@ function handle(ws, msg) {
       p.dir = DIRS.includes(msg.dir) ? msg.dir : p.dir;
       p.moving = !!msg.moving;
       p.area = AREAS.includes(msg.area) ? msg.area : p.area;
+      p.pose = POSES.includes(msg.pose) ? msg.pose : p.pose;
       const room = rooms.get(p.code);
       if (!room) return;
-      const out = { t: 'state', id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
+      const out = { t: 'state', id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, pose: p.pose };
       for (const other of room.players.values()) {
         if (other.id !== p.id) send(other.ws, out);
       }

@@ -303,3 +303,15 @@ input::placeholder { color: #6d5d84; }
   #dialogue-portrait { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- wardrobe pop-up ---------- */
+#wardrobe { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; background: rgba(20, 14, 30, 0.55); }
+.wardrobe-panel { background: var(--plum); border: 3px solid var(--gold); outline: 3px solid var(--plum-deep); padding: 16px 20px; width: min(420px, calc(100vw - 24px)); }
+.wardrobe-panel h3 { margin: 0 0 12px; text-align: center; letter-spacing: 0.1em; color: var(--gold-soft); }
+#wardrobe-list { display: flex; flex-direction: column; gap: 8px; }
+.wardrobe-row { display: flex; align-items: center; gap: 14px; font: inherit; color: var(--cream); background: var(--plum-deep); border: 2px solid #5b4a72; padding: 6px 12px; cursor: pointer; text-align: left; }
+.wardrobe-row canvas { flex: none; background: linear-gradient(#f1dcc0, #e4c8a2); border: 2px solid #8a6a4a; width: 60px; height: 84px; }
+.wardrobe-row.selected { border-color: var(--gold); background: #2a2038; }
+.wardrobe-name { flex: 1; font-size: 1.15rem; }
+.wardrobe-tag { font-size: 0.8rem; color: var(--gold-soft); font-style: italic; }
+.wardrobe-hint { margin-top: 10px; text-align: center; font-size: 0.8rem; color: #b9a9cf; }

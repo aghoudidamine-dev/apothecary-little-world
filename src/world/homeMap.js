@@ -11,6 +11,14 @@ export const DOOR_SPOT = { x: DOOR_CX * TILE, y: (H - 1) * TILE - 2 };
 export const ENTRY_SPAWN = { x: DOOR_CX * TILE, y: (H - 3) * TILE };
 // wardrobe: 2 tiles wide at tx 24-25, back wall row 2 -> stand just below it
 export const WARDROBE_SPOT = { x: 25 * TILE, y: 3 * TILE + 14 };
+// the bed (footprint) and the bath pool, as pixel rectangles
+export const BED_RECT = { x: 6 * TILE, y: 2 * TILE, w: 3 * TILE, h: 2 * TILE };
+export const POOL_RECT = { x: 2 * TILE, y: 13 * TILE, w: 5 * TILE, h: 5 * TILE };
+// where each character lies (head on its own pillow) / sits in the bath, and where they step out
+export const SLEEP_SPOT = { maomao: { x: 109, y: 51 }, jinshi: { x: 131, y: 51 } };
+export const WAKE_SPOT = { maomao: { x: 104, y: 78 }, jinshi: { x: 136, y: 78 } };
+export const BATH_SEAT = { maomao: { x: 56, y: 260 }, jinshi: { x: 88, y: 260 } };
+export const BATH_EXIT = { maomao: { x: 56, y: 300 }, jinshi: { x: 88, y: 300 } };
 // spots inside each side room (used by the world check to prove they're reachable)
 export const ROOM_SPOTS = {
   bedroom: { x: 5 * TILE + 8, y: 7 * TILE },

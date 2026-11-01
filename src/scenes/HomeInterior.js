@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { buildHomeMap, WARDROBE_SPOT } from '../world/homeMap.js';
+import { buildHomeMap, WARDROBE_SPOT, BED_RECT, POOL_RECT, SLEEP_SPOT, WAKE_SPOT, BATH_SEAT, BATH_EXIT } from '../world/homeMap.js';
+import { wardrobeMenu } from '../ui/wardrobeMenu.js';
 import { moveWithCollision } from '../world/collision.js';
 import { Character } from '../entities/Character.js';
 import { buildObjectSprites, packAtlas, makeLabel } from '../art/environment.js';
@@ -15,9 +16,12 @@ const SPEED = 72;
 const WARDROBE_DIST = 26;
 const GIFT_DIST = 28;
 
+/** Distance from a point to a rectangle (0 when inside). */
+const rectDist = (r, x, y) => Math.hypot(Math.max(r.x - x, 0, x - (r.x + r.w)), Math.max(r.y - y, 0, y - (r.y + r.h)));
+
 /**
  * The cozy house the two players share. Fully synced online (AreaSync, area 'home').
- * The wardrobe lives here: press E beside it to cycle through your 3 outfits.
+ * The wardrobe (E) opens a list of your 3 outfits; E at the bed sleeps, E at the pool soaks.
  */
 export class HomeInterior extends Phaser.Scene {
   constructor() { super('Home'); }
@@ -95,9 +99,12 @@ export class HomeInterior extends Phaser.Scene {
   }
 
   tryInteract() {
-    if (dialogue.isOpen || chat.isOpen) return;
+    if (dialogue.isOpen || chat.isOpen || wardrobeMenu.isOpen) return;
+    if (this.me.pose !== 'stand') return this.standUp();
     if (this.nearDoor) return this.scene.start('Game', { returnSpawn: this.returnSpawn });
-    if (this.nearWardrobe) return this.changeOutfit();
+    if (this.nearWardrobe) return this.openWardrobe();
+    if (this.nearBed) return this.lieDown('sleep', SLEEP_SPOT);
+    if (this.nearPool) return this.lieDown('bath', BATH_SEAT);
     if (this.nearPartner) {
       this.me.setState(facingToward(this.me, this.nearPartner.char), false);
       playGiftToss(this, this.me, this.nearPartner.char, 'flower');
@@ -105,20 +112,42 @@ export class HomeInterior extends Phaser.Scene {
     }
   }
 
-  changeOutfit() {
+  /** Go to bed or into the bath: snap to this character's own spot and take the pose. */
+  lieDown(pose, spots) {
+    const at = spots[this.session.character];
+    this.me.setPosition(at.x, at.y);
+    this.me.setPose(pose);
+  }
+
+  standUp() {
+    const c = this.session.character;
+    const to = this.me.pose === 'sleep' ? WAKE_SPOT[c] : BATH_EXIT[c];
+    this.me.setPose('stand');
+    this.me.setPosition(to.x, to.y);
+    this.me.setState('down', false);
+  }
+
+  openWardrobe() {
     const s = this.session;
-    s.outfitIndex = ((s.outfitIndex || 0) + 1) % OUTFITS[s.character].length;
-    this.me.setOutfit(outfitKey(s.character, s.outfitIndex));
-    hud.notice('Now wearing: ' + OUTFITS[s.character][s.outfitIndex].name);
+    this.input.keyboard.enabled = false; // the pop-up list handles the keys
+    wardrobeMenu.open(s.character, s.outfitIndex || 0, (i) => this.applyOutfit(i), () => { this.input.keyboard.enabled = true; });
+  }
+
+  applyOutfit(i) {
+    const s = this.session;
+    if (i === (s.outfitIndex || 0)) return;
+    s.outfitIndex = i;
+    this.me.setOutfit(outfitKey(s.character, i));
+    hud.notice('Now wearing: ' + OUTFITS[s.character][i].name);
     setTimeout(() => hud.notice(''), 1800);
-    if (s.net) s.net.send({ t: 'outfit', index: s.outfitIndex });
+    if (s.net) s.net.send({ t: 'outfit', index: i });
   }
 
   update(time, delta) {
     const dt = Math.min(delta, 50) / 1000;
     const K = this.keys;
     let ix = 0, iy = 0;
-    if (!dialogue.isOpen && !chat.isOpen) {
+    if (!dialogue.isOpen && !chat.isOpen && !wardrobeMenu.isOpen && this.me.pose === 'stand') {
       if (K.a.isDown || K.left.isDown) ix -= 1;
       if (K.d.isDown || K.right.isDown) ix += 1;
       if (K.w.isDown || K.up.isDown) iy -= 1;
@@ -136,21 +165,28 @@ export class HomeInterior extends Phaser.Scene {
     }
     me.setState(dir, moved);
 
-    this.nearDoor = Math.hypot(this.map.door.x - me.x, this.map.door.y - me.y) < 28;
-    this.nearWardrobe = !this.nearDoor && Math.hypot(WARDROBE_SPOT.x - me.x, WARDROBE_SPOT.y - me.y) < WARDROBE_DIST;
+    const standing = me.pose === 'stand';
+    this.nearDoor = standing && Math.hypot(this.map.door.x - me.x, this.map.door.y - me.y) < 28;
+    this.nearWardrobe = standing && !this.nearDoor && Math.hypot(WARDROBE_SPOT.x - me.x, WARDROBE_SPOT.y - me.y) < WARDROBE_DIST;
+    this.nearBed = standing && !this.nearDoor && !this.nearWardrobe && rectDist(BED_RECT, me.x, me.y) < 18;
+    this.nearPool = standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && rectDist(POOL_RECT, me.x, me.y) < 18;
     this.nearPartner = null;
-    if (!this.nearDoor && !this.nearWardrobe && this.session.character === 'jinshi') {
+    if (standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && !this.nearPool && this.session.character === 'jinshi') {
       let best = GIFT_DIST;
       for (const r of this.areaSync.remotes.values()) {
-        if (!r.known) continue;
+        if (!r.known || r.pose !== 'stand') continue;
         const d = Math.hypot(r.char.x - me.x, r.char.y - me.y);
         if (d < best) { best = d; this.nearPartner = r; }
       }
     }
 
-    if (dialogue.isOpen || chat.isOpen) hud.prompt('');
+    if (dialogue.isOpen || chat.isOpen || wardrobeMenu.isOpen) hud.prompt('');
+    else if (me.pose === 'sleep') hud.prompt('E - Get Up');
+    else if (me.pose === 'bath') hud.prompt('E - Get Out');
     else if (this.nearDoor) hud.prompt('E - Leave');
-    else if (this.nearWardrobe) hud.prompt('E - Change Outfit');
+    else if (this.nearWardrobe) hud.prompt('E - Open Wardrobe');
+    else if (this.nearBed) hud.prompt('E - Go to Bed');
+    else if (this.nearPool) hud.prompt('E - Soak in the Bath');
     else if (this.nearPartner) hud.prompt('E - Give Flower');
     else hud.prompt('');
 

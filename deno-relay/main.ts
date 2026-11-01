@@ -23,6 +23,7 @@ const MAX_PLAYERS = 2;
 const CHARACTERS = ["maomao", "jinshi"];
 const DIRS = ["down", "left", "right", "up"];
 const AREAS = ["outside", "palace", "home"];
+const POSES = ["stand", "bath", "sleep"];
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 lookalikes
 const MAP_LIMIT = 4000;
 
@@ -37,6 +38,7 @@ type Player = {
   moving: boolean;
   area: string;
   outfit: number;
+  pose: string;
 };
 type Room = { players: Map<string, Player> };
 
@@ -60,7 +62,7 @@ const num = (v: unknown, fallback: number | null) =>
   typeof v === "number" && Number.isFinite(v) ? Math.max(-MAP_LIMIT, Math.min(MAP_LIMIT, v)) : fallback;
 
 function publicPeer(p: Player) {
-  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, outfit: p.outfit };
+  return { id: p.id, character: p.character, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, outfit: p.outfit, pose: p.pose };
 }
 
 const sockets = new WeakMap<WebSocket, Player>();
@@ -79,7 +81,7 @@ function leaveRoom(ws: WebSocket) {
 function enterRoom(ws: WebSocket, code: string, room: Room, character: string) {
   const player: Player = {
     id: "p" + nextId++, code, character, socket: ws,
-    x: null, y: null, dir: "down", moving: false, area: "outside", outfit: 0,
+    x: null, y: null, dir: "down", moving: false, area: "outside", outfit: 0, pose: "stand",
   };
   sockets.set(ws, player);
   const peers = [...room.players.values()].map(publicPeer);
@@ -126,9 +128,10 @@ function handle(ws: WebSocket, msg: Record<string, unknown>) {
       p.dir = DIRS.includes(msg.dir as string) ? (msg.dir as string) : p.dir;
       p.moving = !!msg.moving;
       p.area = AREAS.includes(msg.area as string) ? (msg.area as string) : p.area;
+      p.pose = POSES.includes(msg.pose as string) ? (msg.pose as string) : p.pose;
       const room = rooms.get(p.code);
       if (!room) return;
-      const out = { t: "state", id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area };
+      const out = { t: "state", id: p.id, x: p.x, y: p.y, dir: p.dir, moving: p.moving, area: p.area, pose: p.pose };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
       return;
     }
