@@ -130,6 +130,24 @@ export class Character {
     this.setPosition(this.x, this.y);
   }
 
+  /** A little floating heart above the character. */
+  spawnHeart(dx = 0) {
+    if (!this.sprite?.scene) return;
+    const heart = this.scene.add.image(Math.round(this.x) + dx, Math.round(this.y) - 30, 'icon_heart')
+      .setOrigin(0.5, 1).setDepth(210001).setScale(0.5).setAlpha(0.95);
+    this.scene.tweens.add({ targets: heart, y: heart.y - 16, alpha: 0, scale: 0.85, duration: 750, ease: 'Cubic.Out', onComplete: () => heart.destroy() });
+  }
+
+  /** While hugging: hearts keep drifting up (and a happy bounce when it starts). */
+  setHugging(on) {
+    if (this.hugEvent) { this.hugEvent.remove(); this.hugEvent = null; }
+    if (!on) return;
+    this.spawnHeart(-4);
+    this.scene.tweens.add({ targets: this.sprite, scaleX: 1.1, scaleY: 1.1, duration: 160, yoyo: true, ease: 'Quad.Out' });
+    let flip = 1;
+    this.hugEvent = this.scene.time.addEvent({ delay: 650, loop: true, callback: () => { this.spawnHeart(4 * flip); flip = -flip; } });
+  }
+
   placeExtras() {
     const t = this.scene.time ? this.scene.time.now : 0;
     for (const e of this.extras || []) {
@@ -189,6 +207,7 @@ export class Character {
     if (this.bubble) this.bubble.destroy();
     if (this.bubbleTimer) this.bubbleTimer.remove();
     this.clearExtras();
+    if (this.hugEvent) this.hugEvent.remove();
     if (this.giftIcon) this.giftIcon.destroy();
     if (this.giftTween) this.giftTween.stop();
     if (this.bounceTween) this.bounceTween.stop();

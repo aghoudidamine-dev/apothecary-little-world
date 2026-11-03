@@ -30,10 +30,12 @@ chat with each other exactly like outside; whoever's elsewhere only reappears on
 in the same place again. Press E near the door to leave.
 
 **Home:** the west house (reached by the dirt path from the courtyard) is your shared home. Walk up to its door and press E to go inside. The living room has a tea table, bookshelf, herb cabinet and the wardrobe; the bedroom (top-left, with the stove) has the bed; below it is the stone bathroom with the green pool; and the two-stall toilet room is on the right. Online sync works inside just like outside (chat and flowers too).
-- **Wardrobe:** E beside it opens a pop-up list of your 3 outfits (click, 1-3, or arrows + Enter). The other player sees the change live and it stays when you leave.
+- **Wardrobe:** in the bedroom, next to the stove. E beside it opens a pop-up list of your 3 outfits (click, 1-3, or arrows + Enter). The other player sees the change live and it stays when you leave.
 - **Sleep:** E beside the bed puts your head on your own pillow (Maomao left, Jinshi right); both of you can sleep at once. E again to get up.
 - **Bath:** E beside the pool soaks you in it, head and shoulders above the water; both of you can soak together. E again to get out. You can chat while sleeping or soaking.
-- The toilet room is decoration only.
+- The bathroom towels, the toilets and the sink are decoration only.
+
+**Hugging:** stand next to the other player and press **H** to ask for a hug. They get "wants a hug! Y = yes, N = no". On yes you both step together facing each other with hearts. If both of you press H at the same time it counts as a yes. Walk away (either of you) and the hug lets go for both. Works outside and in the house.
 
 **Giving a flower:** playing as Jinshi, walk up to Maomao's player and an "E - Give Flower"
 prompt appears. Press E and a flower tosses over to her in a little arc, then she gives a happy

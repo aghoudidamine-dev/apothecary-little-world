@@ -9,8 +9,11 @@ export const FLOOR = { WOOD: 0, RUG: 1, WALL: 2, STONE: 3, WATER: 4, STONEWALL: 
 const DOOR_CX = 20;
 export const DOOR_SPOT = { x: DOOR_CX * TILE, y: (H - 1) * TILE - 2 };
 export const ENTRY_SPAWN = { x: DOOR_CX * TILE, y: (H - 3) * TILE };
-// wardrobe: 2 tiles wide at tx 24-25, back wall row 2 -> stand just below it
-export const WARDROBE_SPOT = { x: 25 * TILE, y: 3 * TILE + 14 };
+// wardrobe: 2 tiles wide at tx 4-5 on the bedroom's back wall -> stand just below it
+export const WARDROBE_SPOT = { x: 5 * TILE, y: 3 * TILE + 14 };
+// where you stand to reach the bathroom towels / the bathroom sink
+export const TOWEL_SPOT = { x: 3 * TILE, y: 12 * TILE + 8 };
+export const SINK_SPOT = { x: 29 * TILE, y: 16 * TILE + 8 };
 // the bed (footprint) and the bath pool, as pixel rectangles
 export const BED_RECT = { x: 6 * TILE, y: 2 * TILE, w: 3 * TILE, h: 2 * TILE };
 export const POOL_RECT = { x: 2 * TILE, y: 13 * TILE, w: 5 * TILE, h: 5 * TILE };
@@ -67,6 +70,7 @@ export function buildHomeMap() {
 
   // ---- bedroom (top-left) ----
   add('stove', 2, 2, 2, 1);
+  add('wardrobe', 4, 2, 2, 1);
   add('bed', 6, 2, 3, 2);
   add('chest', 1, 8, 2, 1);
   add('cushion', 4, 6);
@@ -77,7 +81,7 @@ export function buildHomeMap() {
   add('cabinet', 14, 2, 2, 1);
   add('bookshelf', 17, 2, 2, 1);
   add('window', 21, 0, 2, 2); add('plant', 22, 2);
-  add('wardrobe', 24, 2, 2, 1);
+  add('bookshelf', 24, 2, 2, 1);
   add('table', 17, 9, 3, 2);
   add('cushion', 16, 11); add('cushion', 20, 11); add('cushion', 18, 12);
   add('lantern', 10, 4); add('lantern', 27, 5);
@@ -85,13 +89,13 @@ export function buildHomeMap() {
 
   // ---- bathroom (bottom-left) ----
   add('towelrack', 2, 11, 2, 1);
-  add('bucket', 8, 12); add('stool', 7, 12);
   add('stool', 8, 19); add('bucket', 7, 19);
-  add('lantern', 1, 12); add('lantern', 1, 19);
+  add('lantern', 1, 15); add('lantern', 1, 19);
 
-  // ---- toilet room (bottom-right): two stalls ----
-  add('toilet', 28, 15, 2, 1); add('divider', 30, 15, 1, 2); add('toilet', 31, 15, 2, 1);
-  add('basin', 28, 20); add('bucket', 32, 20); add('plant', 32, 17);
+  // ---- toilet room (bottom-right): a sink and two toilets ----
+  add('sink', 28, 15, 2, 1);
+  add('toilet', 30, 15); add('divider', 31, 15, 1, 2); add('toilet', 32, 15);
+  add('plant', 32, 19);
 
   return { W, H, ground, blocked, objects, npcs: [], spawn: ENTRY_SPAWN, door: DOOR_SPOT };
 }

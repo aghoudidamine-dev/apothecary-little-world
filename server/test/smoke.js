@@ -95,6 +95,11 @@ const of = await a.next((m) => m.t === 'outfit');
 assert.deepEqual([of.id, of.index], [joined.id, 2]);
 b.send({ t: 'outfit', index: 9 }); // invalid, must be ignored
 
+a.send({ t: 'hug', action: 'ask' });
+const hg = await b.next((m) => m.t === 'hug');
+assert.deepEqual([hg.id, hg.action], [created.id, 'ask']);
+b.send({ t: 'hug', action: 'bogus' }); // ignored
+
 b.send({ t: 'gift', kind: 'flower' });
 const gift = await a.next((m) => m.t === 'gift');
 assert.deepEqual([gift.id, gift.kind], [joined.id, 'flower']);

@@ -79,6 +79,7 @@ export class PalaceInterior extends Phaser.Scene {
     });
     if (session.net) {
       session.net.on('gift', () => {});
+      session.net.on('hug', () => {});
       session.net.on('close', () => hud.notice('Connection lost. Leave and rejoin the room to keep playing together.'));
     }
   }

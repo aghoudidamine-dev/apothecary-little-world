@@ -11,6 +11,7 @@ import { hud } from '../ui/hud.js';
 import { dialogue } from '../ui/dialogue.js';
 import { chat } from '../ui/chat.js';
 import { AreaSync, CHARACTER_LABEL } from '../multiplayer/areaSync.js';
+import { HugController } from '../multiplayer/hug.js';
 
 const SPEED = 72;
 const WARDROBE_DIST = 26;
@@ -64,10 +65,13 @@ export class HomeInterior extends Phaser.Scene {
     cam.startFollow(this.me.sprite, true, 1, 1);
 
     const kb = this.input.keyboard;
-    this.keys = kb.addKeys({ w: 'W', a: 'A', s: 'S', d: 'D', up: 'UP', left: 'LEFT', down: 'DOWN', right: 'RIGHT' });
+    this.keys = kb.addKeys({ w: 'W', a: 'A', s: 'S', d: 'D', up: 'UP', left: 'LEFT', down: 'DOWN', right: 'RIGHT', h: 'H', y: 'Y', n: 'N' });
     const once = (fn) => (e) => { if (!e || !e.repeat) fn(); };
     kb.on('keydown-E', once(() => this.tryInteract()));
     kb.on('keydown-ENTER', once(() => { if (!chat.isOpen && session.net) this.openChat(); }));
+    kb.on('keydown-H', once(() => this.hug.ask(this.hugPartner)));
+    kb.on('keydown-Y', once(() => this.hug.respond(true)));
+    kb.on('keydown-N', once(() => this.hug.respond(false)));
 
     chat.onSubmit = (text) => {
       this.me.showChat(text);
@@ -82,7 +86,9 @@ export class HomeInterior extends Phaser.Scene {
       onPlayerCount: (n) => hud.setPlayers(n),
       onChat: (label, text) => chat.addLine(label, text),
     });
+    this.hug = new HugController(this, session, this.areaSync, hud, () => dialogue.isOpen || chat.isOpen || wardrobeMenu.isOpen);
     if (session.net) {
+      session.net.on('hug', (m) => this.hug.onNet(m));
       session.net.on('gift', (m) => this.onRemoteGift(m));
       session.net.on('close', () => hud.notice('Connection lost. Leave and rejoin the room to keep playing together.'));
     }
@@ -138,8 +144,8 @@ export class HomeInterior extends Phaser.Scene {
     if (i === (s.outfitIndex || 0)) return;
     s.outfitIndex = i;
     this.me.setOutfit(outfitKey(s.character, i));
-    hud.notice('Now wearing: ' + OUTFITS[s.character][i].name);
-    setTimeout(() => hud.notice(''), 1800);
+    hud.toast('Now wearing: ' + OUTFITS[s.character][i].name);
+    setTimeout(() => hud.toast(''), 1800);
     if (s.net) s.net.send({ t: 'outfit', index: i });
   }
 
@@ -153,6 +159,7 @@ export class HomeInterior extends Phaser.Scene {
       if (K.w.isDown || K.up.isDown) iy -= 1;
       if (K.s.isDown || K.down.isDown) iy += 1;
     }
+    this.hug.update(!!(ix || iy));
     const me = this.me;
     let dir = me.dir, moved = false;
     if (ix || iy) {
@@ -170,6 +177,7 @@ export class HomeInterior extends Phaser.Scene {
     this.nearWardrobe = standing && !this.nearDoor && Math.hypot(WARDROBE_SPOT.x - me.x, WARDROBE_SPOT.y - me.y) < WARDROBE_DIST;
     this.nearBed = standing && !this.nearDoor && !this.nearWardrobe && rectDist(BED_RECT, me.x, me.y) < 18;
     this.nearPool = standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && rectDist(POOL_RECT, me.x, me.y) < 18;
+    this.hugPartner = standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && !this.nearPool ? this.hug.findPartner() : null;
     this.nearPartner = null;
     if (standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && !this.nearPool && this.session.character === 'jinshi') {
       let best = GIFT_DIST;
@@ -181,13 +189,15 @@ export class HomeInterior extends Phaser.Scene {
     }
 
     if (dialogue.isOpen || chat.isOpen || wardrobeMenu.isOpen) hud.prompt('');
+    else if (this.hug.state === 'asked') hud.prompt('Y - Yes   N - No');
+    else if (this.hug.hugging) hud.prompt('Walk away to let go');
     else if (me.pose === 'sleep') hud.prompt('E - Get Up');
     else if (me.pose === 'bath') hud.prompt('E - Get Out');
     else if (this.nearDoor) hud.prompt('E - Leave');
     else if (this.nearWardrobe) hud.prompt('E - Open Wardrobe');
     else if (this.nearBed) hud.prompt('E - Go to Bed');
     else if (this.nearPool) hud.prompt('E - Soak in the Bath');
-    else if (this.nearPartner) hud.prompt('E - Give Flower');
+    else if (this.nearPartner || this.hugPartner) hud.prompt((this.nearPartner ? 'E - Give Flower   ' : '') + (this.hugPartner ? 'H - Hug' : ''));
     else hud.prompt('');
 
     this.areaSync.step(dt);

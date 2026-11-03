@@ -164,6 +164,16 @@ function handle(ws: WebSocket, msg: Record<string, unknown>) {
       for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
       return;
     }
+    case "hug": {
+      const p = sockets.get(ws);
+      if (!p) return;
+      if (!["ask", "yes", "no", "end"].includes(msg.action as string)) return;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const out = { t: "hug", id: p.id, action: msg.action };
+      for (const other of room.players.values()) if (other.id !== p.id) send(other.socket, out);
+      return;
+    }
     case "outfit": {
       const p = sockets.get(ws);
       if (!p) return;

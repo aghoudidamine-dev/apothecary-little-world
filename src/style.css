@@ -315,3 +315,5 @@ input::placeholder { color: #6d5d84; }
 .wardrobe-name { flex: 1; font-size: 1.15rem; }
 .wardrobe-tag { font-size: 0.8rem; color: var(--gold-soft); font-style: italic; }
 .wardrobe-hint { margin-top: 10px; text-align: center; font-size: 0.8rem; color: #b9a9cf; }
+
+.hud-card.toast { left: 50%; transform: translateX(-50%); top: 10px; border-color: var(--blossom); color: #fff8e6; font-size: 1rem; text-align: center; }

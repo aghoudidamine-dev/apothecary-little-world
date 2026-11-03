@@ -109,19 +109,31 @@ function drawChest() {
 
 
 function drawToilet() {
+  const { canvas, ctx } = sprite(16, 28);
+  const white = '#f4f1ea', shade = '#d9d4c8', water = '#a8d4e6';
+  ellipse(ctx, 8, 26, 7, 2, 'rgba(20,10,10,0.2)');
+  rect(ctx, 2, 1, 12, 9, white); rect(ctx, 2, 1, 12, 2, '#ffffff'); rect(ctx, 2, 8, 12, 2, shade);
+  px(ctx, 12, 3, '#b9bfc2'); px(ctx, 13, 3, '#b9bfc2');
+  rect(ctx, 4, 10, 8, 4, shade);
+  ellipse(ctx, 8, 18, 7, 6, white); ellipse(ctx, 8, 17, 6, 5, shade);
+  ellipse(ctx, 8, 17, 5, 4, white); ellipse(ctx, 8, 17, 3, 2, water);
+  rect(ctx, 5, 23, 6, 3, shade);
+  return outline(canvas, DARK);
+}
+function drawSink() {
   const { canvas, ctx } = sprite(32, 32);
-  ellipse(ctx, 16, 30, 13, 2, 'rgba(20,10,10,0.25)');
-  rect(ctx, 6, 0, 20, 9, '#8a5c3f'); rect(ctx, 6, 0, 20, 2, '#a87650'); px(ctx, 16, 3, GOLD);
-  rect(ctx, 2, 14, 28, 16, '#7a5238'); rect(ctx, 4, 18, 24, 10, WOOD); rect(ctx, 15, 18, 2, 10, WOOD_DARK);
-  px(ctx, 12, 23, GOLD); px(ctx, 19, 23, GOLD);
-  rect(ctx, 0, 10, 32, 6, '#a87650'); rect(ctx, 0, 10, 32, 1, '#c99a6e');
-  ellipse(ctx, 16, 13, 7, 2, '#2b1a14'); ellipse(ctx, 16, 13, 5, 1, WOOD_DARK);
+  const white = '#f4f1ea', shade = '#d9d4c8';
+  rect(ctx, 8, 0, 16, 12, '#8a5c3f'); rect(ctx, 10, 2, 12, 8, '#cfe3ea'); px(ctx, 12, 3, '#ffffff'); px(ctx, 13, 4, '#ffffff'); rect(ctx, 11, 6, 3, 1, '#e8f4f8');
+  rect(ctx, 14, 12, 4, 4, '#b9bfc2'); rect(ctx, 14, 12, 4, 1, '#e8ecee'); px(ctx, 12, 14, '#b9bfc2'); px(ctx, 19, 14, '#b9bfc2');
+  rect(ctx, 3, 15, 26, 5, white); rect(ctx, 3, 15, 26, 1, '#ffffff');
+  rect(ctx, 5, 19, 22, 5, shade); ellipse(ctx, 16, 17, 9, 2, '#bfe3f2');
+  rect(ctx, 12, 24, 8, 8, white); rect(ctx, 12, 24, 2, 8, '#ffffff'); rect(ctx, 18, 24, 2, 8, shade);
   return outline(canvas, DARK);
 }
 function drawDivider() {
   const { canvas, ctx } = sprite(16, 32);
-  rect(ctx, 2, 2, 3, 28, WOOD_DARK); rect(ctx, 11, 2, 3, 28, WOOD_DARK);
-  [4, 11, 18, 25].forEach((y) => { rect(ctx, 2, y, 12, 4, '#8a5c3f'); rect(ctx, 2, y, 12, 1, '#a87650'); });
+  rect(ctx, 5, 2, 6, 28, '#e9e4d8'); rect(ctx, 5, 2, 2, 28, '#ffffff'); rect(ctx, 9, 2, 2, 28, '#c9c3b4');
+  rect(ctx, 4, 0, 8, 3, WOOD); rect(ctx, 4, 29, 8, 3, WOOD);
   return outline(canvas, DARK);
 }
 function drawBucket() {
@@ -159,7 +171,7 @@ export function buildHomeSprites() {
   return {
     bed: drawBed(), table: drawTable(), cushion: drawCushion(), bookshelf: drawBookshelf(),
     cabinet: drawCabinet(), stove: drawStove(), window: drawWindow(), plant: drawPlant(), chest: drawChest(),
-    toilet: drawToilet(), divider: drawDivider(), bucket: drawBucket(), basin: drawBasin(), stool: drawStool(), towelrack: drawTowelRack(),
+    toilet: drawToilet(), sink: drawSink(), divider: drawDivider(), bucket: drawBucket(), stool: drawStool(), towelrack: drawTowelRack(),
   };
 }
 

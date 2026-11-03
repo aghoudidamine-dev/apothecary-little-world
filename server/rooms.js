@@ -8,6 +8,7 @@
 //                      {t:'chat', text}
 //                      {t:'gift', kind}   kind: 'flower'
 //                      {t:'outfit', index}   index: 0 | 1 | 2
+//                      {t:'hug', action}   action: ask | yes | no | end  (relayed as {t:'hug', id, action})
 //   server -> client   {t:'created', code, id}
 //                      {t:'joined', code, id, peers:[{id, character, x, y, dir, moving, area, outfit}]}
 //                      {t:'peer-joined', peer:{...}}   {t:'peer-left', id}
@@ -147,6 +148,16 @@ function handle(ws, msg) {
       const room = rooms.get(p.code);
       if (!room) return;
       const out = { t: 'gift', id: p.id, kind: 'flower' };
+      for (const other of room.players.values()) if (other.id !== p.id) send(other.ws, out);
+      return;
+    }
+    case 'hug': {
+      const p = ws.player;
+      if (!p) return;
+      if (!['ask', 'yes', 'no', 'end'].includes(msg.action)) return;
+      const room = rooms.get(p.code);
+      if (!room) return;
+      const out = { t: 'hug', id: p.id, action: msg.action };
       for (const other of room.players.values()) if (other.id !== p.id) send(other.ws, out);
       return;
     }

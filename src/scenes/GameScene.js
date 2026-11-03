@@ -10,6 +10,7 @@ import { chat } from '../ui/chat.js';
 import { playGiftToss, facingToward } from '../entities/gifts.js';
 import { outfitKey } from '../art/characters.js';
 import { AreaSync, CHARACTER_LABEL } from '../multiplayer/areaSync.js';
+import { HugController } from '../multiplayer/hug.js';
 
 const SPEED = 72;            // px per second (16px tiles)
 const INTERACT_DIST = 26;    // how close you must be to an NPC to talk
@@ -67,7 +68,7 @@ export class GameScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     this.keys = kb.addKeys({
       w: 'W', a: 'A', s: 'S', d: 'D', up: 'UP', left: 'LEFT', down: 'DOWN', right: 'RIGHT',
-      talk: 'E', space: 'SPACE', enter: 'ENTER', esc: 'ESC',
+      talk: 'E', space: 'SPACE', enter: 'ENTER', esc: 'ESC', h: 'H', y: 'Y', n: 'N',
     });
 
     // Talk / dialogue keys are handled as events (not polled) so a very quick tap is never missed.
@@ -79,6 +80,9 @@ export class GameScene extends Phaser.Scene {
       if (!chat.isOpen && !dialogue.isOpen && session.net) this.openChat();
     }));
     kb.on('keydown-ESC', once(() => { if (dialogue.isOpen) dialogue.close(); }));
+    kb.on('keydown-H', once(() => this.hug.ask(this.hugPartner)));
+    kb.on('keydown-Y', once(() => this.hug.respond(true)));
+    kb.on('keydown-N', once(() => this.hug.respond(false)));
 
     chat.onSubmit = (text) => {
       this.me.showChat(text);
@@ -100,7 +104,9 @@ export class GameScene extends Phaser.Scene {
       onPlayerCount: (n) => hud.setPlayers(n),
       onChat: (label, text) => chat.addLine(label, text),
     });
+    this.hug = new HugController(this, session, this.areaSync, hud, () => dialogue.isOpen || chat.isOpen);
     if (session.net) {
+      session.net.on('hug', (m) => this.hug.onNet(m));
       session.net.on('gift', (m) => this.onRemoteGift(m));
       session.net.on('close', () => hud.notice('Connection lost. Leave and rejoin the room to keep playing together.'));
     }
@@ -165,6 +171,7 @@ export class GameScene extends Phaser.Scene {
       if (K.w.isDown || K.up.isDown) iy -= 1;
       if (K.s.isDown || K.down.isDown) iy += 1;
     }
+    this.hug.update(!!(ix || iy));
     const me = this.me;
     let dir = me.dir, moved = false;
     if (ix || iy) {
@@ -190,6 +197,8 @@ export class GameScene extends Phaser.Scene {
 
     this.nearHome = !near && !this.nearDoor && Math.hypot(HOME_DOOR.x - me.x, HOME_DOOR.y - me.y) < DOOR_DIST;
 
+    this.hugPartner = !near && !this.nearDoor && !this.nearHome ? this.hug.findPartner() : null;
+
     // Jinshi, near Maomao's player: offer to give a flower
     this.nearPartner = null;
     if (!near && !this.nearDoor && !this.nearHome && this.session.character === 'jinshi') {
@@ -202,10 +211,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (dialogue.isOpen || chat.isOpen) hud.prompt('');
+    else if (this.hug.state === 'asked') hud.prompt('Y - Yes   N - No');
+    else if (this.hug.hugging) hud.prompt('Walk away to let go');
     else if (near) hud.prompt('E - Talk');
     else if (this.nearDoor) hud.prompt('E - Enter');
     else if (this.nearHome) hud.prompt('E - Go Inside');
-    else if (this.nearPartner) hud.prompt('E - Give Flower');
+    else if (this.nearPartner || this.hugPartner) hud.prompt((this.nearPartner ? 'E - Give Flower   ' : '') + (this.hugPartner ? 'H - Hug' : ''));
     else hud.prompt('');
 
     this.areaSync.step(dt);

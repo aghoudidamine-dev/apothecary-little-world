@@ -22,6 +22,11 @@ export const hud = {
     el.textContent = text || '';
     el.hidden = !text;
   },
+  toast(text) {
+    const el = $('hud-toast');
+    el.textContent = text || '';
+    el.hidden = !text;
+  },
   prompt(text) {
     const el = $('prompt');
     el.textContent = text || '';
