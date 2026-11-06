@@ -130,6 +130,15 @@ export class Character {
     this.setPosition(this.x, this.y);
   }
 
+  /** Hide the whole character (sprite, shadow, name, extras) while something else draws them, e.g. a hug. */
+  setHidden(on) {
+    this.hidden = on;
+    this.sprite.setVisible(!on);
+    this.shadow.setVisible(!on && this.pose === 'stand');
+    if (this.label) this.label.setVisible(!on && this.pose !== 'sleep');
+    for (const e of this.extras || []) e.obj.setVisible(!on);
+  }
+
   /** A little floating heart above the character. */
   spawnHeart(dx = 0) {
     if (!this.sprite?.scene) return;

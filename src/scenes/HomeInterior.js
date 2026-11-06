@@ -126,6 +126,7 @@ export class HomeInterior extends Phaser.Scene {
   }
 
   standUp() {
+    if (this.hug.hugging) this.hug.stop(true);
     const c = this.session.character;
     const to = this.me.pose === 'sleep' ? WAKE_SPOT[c] : BATH_EXIT[c];
     this.me.setPose('stand');
@@ -177,7 +178,7 @@ export class HomeInterior extends Phaser.Scene {
     this.nearWardrobe = standing && !this.nearDoor && Math.hypot(WARDROBE_SPOT.x - me.x, WARDROBE_SPOT.y - me.y) < WARDROBE_DIST;
     this.nearBed = standing && !this.nearDoor && !this.nearWardrobe && rectDist(BED_RECT, me.x, me.y) < 18;
     this.nearPool = standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && rectDist(POOL_RECT, me.x, me.y) < 18;
-    this.hugPartner = standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && !this.nearPool ? this.hug.findPartner() : null;
+    this.hugPartner = (standing ? (!this.nearDoor && !this.nearWardrobe && !this.nearBed && !this.nearPool) : me.pose === 'sleep') ? this.hug.findPartner() : null;
     this.nearPartner = null;
     if (standing && !this.nearDoor && !this.nearWardrobe && !this.nearBed && !this.nearPool && this.session.character === 'jinshi') {
       let best = GIFT_DIST;
@@ -190,8 +191,8 @@ export class HomeInterior extends Phaser.Scene {
 
     if (dialogue.isOpen || chat.isOpen || wardrobeMenu.isOpen) hud.prompt('');
     else if (this.hug.state === 'asked') hud.prompt('Y - Yes   N - No');
-    else if (this.hug.hugging) hud.prompt('Walk away to let go');
-    else if (me.pose === 'sleep') hud.prompt('E - Get Up');
+    else if (this.hug.hugging) hud.prompt(me.pose === 'sleep' ? 'E - Get Up' : 'Walk away to let go');
+    else if (me.pose === 'sleep') hud.prompt(this.hugPartner ? 'E - Get Up   H - Cuddle' : 'E - Get Up');
     else if (me.pose === 'bath') hud.prompt('E - Get Out');
     else if (this.nearDoor) hud.prompt('E - Leave');
     else if (this.nearWardrobe) hud.prompt('E - Open Wardrobe');
