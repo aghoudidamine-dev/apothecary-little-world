@@ -107,6 +107,7 @@ export class HugController {
     } else { // cuddling in bed: the picture replaces both heads on the pillows
       this.image = sc.add.image(BED_RECT.x + BED_RECT.w / 2, 25, texKey).setOrigin(0.5, 0).setDepth(65.5);
     }
+    this.sway = sc.tweens.add({ targets: this.image, y: this.image.y - 1, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.setState('hugging', id);
     me.setHidden(true); r.char.setHidden(true);
     me.setHugging(true); r.char.setHugging(true);
@@ -115,6 +116,7 @@ export class HugController {
 
   stop(tell = true) {
     const r = this.areaSync.remotes.get(this.partnerId);
+    if (this.sway) { this.sway.stop(); this.sway = null; }
     if (this.image) { this.image.destroy(); this.image = null; }
     this.scene.me.setHidden(false); this.scene.me.setHugging(false);
     if (r) { r.char.setHidden(false); r.char.setHugging(false); }

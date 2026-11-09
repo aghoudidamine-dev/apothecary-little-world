@@ -1,4 +1,5 @@
-import { CELL_H, FEET_Y } from '../art/characters.js';
+import Phaser from 'phaser';
+import { CELL_H, FEET_Y, CHARACTER_SPECS } from '../art/characters.js';
 
 /** Sprite + shadow + name label that moves as one unit. Used for players and NPCs. */
 export class Character {
@@ -124,8 +125,15 @@ export class Character {
     } else if (pose === 'sleep') {
       this.sprite.setCrop(0, 0, 20, 13);
       this.depthOverride = opts.depth ?? 65; // just above the bed sprite
+      // closed eyes: paint over the open eyes with skin, then a short lash line each
+      const eye = CHARACTER_SPECS[this.key]?.eye || '#1d2b33';
+      const col = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
+      const parts = [[8, 10, 1, 1, '#f6d3b3'], [11, 10, 1, 1, '#f6d3b3'], [7, 11, 2, 1, eye], [11, 11, 2, 1, eye]];
+      for (const [ex, ey, w, h, c] of parts) {
+        this.extras.push({ obj: sc.add.rectangle(0, 0, w, h, col(c)).setOrigin(0, 0), dx: ex - 10, dy: ey - 26, d: 0.5 });
+      }
       const z = sc.add.text(0, 0, 'z', { fontFamily: 'Georgia, serif', fontSize: '11px', color: '#fff8e6', stroke: '#2b2238', strokeThickness: 3 }).setOrigin(0.5);
-      this.extras = [{ obj: z, dx: 12, dy: -30, d: 0.6, bob: true }];
+      this.extras.push({ obj: z, dx: 12, dy: -30, d: 0.6, bob: true });
     }
     this.setPosition(this.x, this.y);
   }
@@ -171,6 +179,11 @@ export class Character {
   }
 
   playAnim() {
+    if (this.pose === 'sleep') { // asleep: hold the still frame so the closed eyes stay lined up
+      this.sprite.anims.stop();
+      this.sprite.setTexture('char_' + this.key, 0);
+      return;
+    }
     this.sprite.play(`${this.key}_${this.moving ? 'walk' : 'idle'}_${this.dir}`, true);
   }
 

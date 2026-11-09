@@ -31,7 +31,7 @@ in the same place again. Press E near the door to leave.
 
 **Home:** the west house (reached by the dirt path from the courtyard) is your shared home. Walk up to its door and press E to go inside. The living room has a tea table, bookshelf, herb cabinet and the wardrobe; the bedroom (top-left, with the stove) has the bed; below it is the stone bathroom with the green pool; and the two-stall toilet room is on the right. Online sync works inside just like outside (chat and flowers too).
 - **Wardrobe:** in the bedroom, next to the stove. E beside it opens a pop-up list of your 3 outfits (click, 1-3, or arrows + Enter). The other player sees the change live and it stays when you leave.
-- **Sleep:** E beside the bed puts your head on your own pillow (Maomao left, Jinshi right); both of you can sleep at once. E again to get up.
+- **Sleep:** E beside the bed tucks you in with your head on your own pillow, eyes closed (Maomao left, Jinshi right); both of you can sleep at once. E again to get up.
 - **Bath:** E beside the pool soaks you in it, head and shoulders above the water; both of you can soak together. E again to get out. You can chat while sleeping or soaking.
 - The bathroom towels, the toilets and the sink are decoration only.
 
